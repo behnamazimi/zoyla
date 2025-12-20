@@ -9,7 +9,7 @@ import { KeyboardGuide } from "../features/shortcuts";
 import * as styles from "./Toolbar.css";
 
 /** GitHub repository URL */
-const GITHUB_URL = "https://github.com/user/zoyla";
+const GITHUB_URL = "https://github.com/behnamazimi/zoyla";
 
 /**
  * Application toolbar with global actions.
