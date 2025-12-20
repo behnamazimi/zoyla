@@ -58,11 +58,35 @@ jobs:
       - name: Build the app
         run: npm run tauri build -- --target ${{ matrix.target }}
 
+      - name: Prepare Windows artifacts
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p dist-artifacts
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi dist-artifacts/ 2>/dev/null || true
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe dist-artifacts/ 2>/dev/null || true
+
+      - name: Prepare macOS artifacts
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          mkdir -p dist-artifacts
+          # Copy .dmg file (contains the .app bundle)
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg dist-artifacts/ 2>/dev/null || true
+
+      - name: Prepare Linux artifacts
+        if: matrix.platform == 'ubuntu-latest'
+        shell: bash
+        run: |
+          mkdir -p dist-artifacts
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage dist-artifacts/ 2>/dev/null || true
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb dist-artifacts/ 2>/dev/null || true
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: zoyla-${{ matrix.target }}
-          path: src-tauri/target/${{ matrix.target }}/release/bundle/**
+          path: dist-artifacts/*
           retention-days: 30
 
   release:
@@ -84,10 +108,21 @@ jobs:
         with:
           path: artifacts
 
+      - name: Find and list release files
+        shell: bash
+        run: |
+          echo "Release files:"
+          find artifacts -type f \( -name "*.exe" -o -name "*.msi" -o -name "*.app" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" \) | head -20
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.msi
+            artifacts/**/*.dmg
+            artifacts/**/*.AppImage
+            artifacts/**/*.deb
           name: Release ${{ steps.tag_version.outputs.VERSION }}
           draft: false
           prerelease: false
