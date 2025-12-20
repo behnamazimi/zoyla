@@ -2,7 +2,7 @@
   "name": "zoyla",
   "description": "Fast, lightweight HTTP load testing app for quick, reliable performance insights",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "repository": {
     "type": "git",
