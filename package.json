@@ -18,7 +18,9 @@
     "lint": "oxlint --fix src vite.config.ts",
     "lint:check": "oxlint src vite.config.ts",
     "knip": "knip",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "sync-version": "node scripts/sync-version.js",
+    "version": "npm run sync-version && git add src-tauri/tauri.conf.json src-tauri/Cargo.toml"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.12",

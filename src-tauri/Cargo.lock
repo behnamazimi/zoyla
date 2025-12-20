@@ -5889,7 +5889,7 @@ dependencies = [
 
 [[package]]
 name = "zoyla"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "futures",
  "once_cell",

@@ -58,29 +58,55 @@ jobs:
       - name: Build the app
         run: npm run tauri build -- --target ${{ matrix.target }}
 
+      - name: Extract version from package.json
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
       - name: Prepare Windows artifacts
         if: matrix.platform == 'windows-latest'
         shell: bash
         run: |
           mkdir -p dist-artifacts
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi dist-artifacts/ 2>/dev/null || true
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe dist-artifacts/ 2>/dev/null || true
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          # Copy and rename MSI
+          if [ -f "src-tauri/target/${{ matrix.target }}/release/bundle/msi"/*.msi ]; then
+            cp src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi "dist-artifacts/zoyla-${VERSION}-windows-x64.msi"
+          fi
+          # Copy and rename NSIS installer
+          if [ -f "src-tauri/target/${{ matrix.target }}/release/bundle/nsis"/*.exe ]; then
+            cp src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe "dist-artifacts/zoyla-${VERSION}-windows-x64-setup.exe"
+          fi
 
       - name: Prepare macOS artifacts
         if: matrix.platform == 'macos-latest'
         shell: bash
         run: |
           mkdir -p dist-artifacts
-          # Copy .dmg file (contains the .app bundle)
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg dist-artifacts/ 2>/dev/null || true
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          OS_ARCH="${{ matrix.target == 'aarch64-apple-darwin' && 'macos-arm64' || 'macos-x64' }}"
+          # Copy and rename .dmg file
+          if [ -f "src-tauri/target/${{ matrix.target }}/release/bundle/dmg"/*.dmg ]; then
+            cp src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg "dist-artifacts/zoyla-${VERSION}-${OS_ARCH}.dmg"
+          fi
 
       - name: Prepare Linux artifacts
         if: matrix.platform == 'ubuntu-latest'
         shell: bash
         run: |
           mkdir -p dist-artifacts
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage dist-artifacts/ 2>/dev/null || true
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb dist-artifacts/ 2>/dev/null || true
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          # Copy and rename AppImage
+          if [ -f "src-tauri/target/${{ matrix.target }}/release/bundle/appimage"/*.AppImage ]; then
+            cp src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage "dist-artifacts/zoyla-${VERSION}-linux-x64.AppImage"
+          fi
+          # Copy and rename .deb
+          if [ -f "src-tauri/target/${{ matrix.target }}/release/bundle/deb"/*.deb ]; then
+            cp src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb "dist-artifacts/zoyla-${VERSION}-linux-x64.deb"
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
