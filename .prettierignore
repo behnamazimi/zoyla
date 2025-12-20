@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build outputs
+dist
+dist-ssr
+target
+
+# Generated files
+*.tsbuildinfo
+gen/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode
+.idea
+
+# Tauri
+src-tauri/target
+src-tauri/gen
+

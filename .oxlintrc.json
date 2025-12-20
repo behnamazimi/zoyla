@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-unused-vars": "warn",
+    "prefer-const": "warn",
+    "no-var": "error"
+  }
+}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tauri + React + Typescript</title>
+    <style>
+      /* Prevent white flash on load - use dark theme background by default */
+      html, body {
+        background-color: #0f0f14;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      /* Light theme background (will be applied when data-theme="light" is set) */
+      html[data-theme="light"], html[data-theme="light"] body {
+        background-color: #f5f5fa;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
