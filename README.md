@@ -6,7 +6,7 @@ Fast, lightweight HTTP load testing desktop application for quick, reliable perf
 
 ## Overview
 
-Zoyla is a cross-platform desktop application built with Tauri, React, and Rust. It provides a simple, intuitive interface for running HTTP load tests without the complexity of enterprise testing suites.
+Zoyla is a desktop application that provides a simple, intuitive interface for running HTTP load tests without the complexity of enterprise testing suites.
 
 ## Target Users
 
@@ -27,7 +27,7 @@ Zoyla fills the gap between basic `curl` tests and full performance suites like 
 - 🪶 Lightweight desktop app with efficient Rust backend
 - 📊 Accurate performance measurements
 
-### Common Questions Zoyla Answers
+## Common Questions Zoyla Answers
 
 - How many requests per second can this endpoint handle?
 - What happens when concurrency spikes?
@@ -44,7 +44,6 @@ Zoyla fills the gap between basic `curl` tests and full performance suites like 
 - Save and replay previous test configurations
 - HTTP/2 support, rate limiting, proxy configuration, header customization
 - JSON and CSV export for further analysis
-- Native desktop app
 
 ## Installation
 
@@ -56,7 +55,7 @@ Download the latest release for your platform from the [Releases page](https://g
 
 - [Node.js](https://nodejs.org/) (v18 or later)
 - [Rust](https://www.rust-lang.org/tools/install) (latest stable)
-- [Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites)
+- [Tauri prerequisites](https://tauri.app/start/prerequisites)
 
 **Build:**
 
