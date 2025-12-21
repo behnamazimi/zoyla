@@ -18,3 +18,6 @@ export { Sidebar } from "./Sidebar";
 
 /** Right content area showing progress/results */
 export { MainContent } from "./MainContent";
+
+/** Bottom status bar with version and author info */
+export { StatusBar } from "./StatusBar";

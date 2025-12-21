@@ -96,7 +96,8 @@ export function ResultsContainer() {
     selectEntry(null);
   };
 
-  const successRate = stats.successful_requests / (stats.successful_requests + stats.failed_requests);
+  const successRate =
+    stats.successful_requests / (stats.successful_requests + stats.failed_requests);
   const statusVariant = successRate >= 0.95 ? "success" : successRate >= 0.8 ? "warning" : "error";
 
   return (
@@ -107,7 +108,9 @@ export function ResultsContainer() {
           {testStartTime && (
             <span className={styles.resultsTimestamp}>{formatTestTime(testStartTime)}</span>
           )}
-          <span className={`${styles.errorIndicator} ${styles.errorIndicatorVariants[statusVariant]}`}>
+          <span
+            className={`${styles.errorIndicator} ${styles.errorIndicatorVariants[statusVariant]}`}
+          >
             {(successRate * 100).toFixed(0)}% success
           </span>
         </div>

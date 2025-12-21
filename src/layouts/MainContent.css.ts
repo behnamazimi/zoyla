@@ -14,7 +14,6 @@ export const mainContent = style({
   border: `1px solid ${vars.color.border.subtle}`,
   borderRadius: vars.radius.lg,
   marginTop: vars.space.md,
-  marginBottom: vars.space.md,
   boxShadow: vars.shadow.lg,
 });
 

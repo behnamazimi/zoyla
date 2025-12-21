@@ -19,5 +19,6 @@ export const mainLayout = style({
   overflow: "hidden",
   padding: vars.space.md,
   paddingTop: 0,
+  paddingBottom: 0,
   gap: vars.space.md,
 });

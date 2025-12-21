@@ -28,11 +28,7 @@ export function MainContent() {
       {/* Empty state when no results */}
       {!isRunning && !stats && (
         <div className={styles.emptyState}>
-          <img
-            src={logoSrc}
-            alt="Zoyla"
-            className={styles.emptyStateLogo}
-          />
+          <img src={logoSrc} alt="Zoyla" className={styles.emptyStateLogo} />
           <h2 className={styles.emptyStateTitle}>Zoyla, Ready to Test</h2>
           <p className={styles.emptyStateDescription}>
             Set your target, tweak the parameters, and let Zoyla hammer your endpoints.

@@ -46,13 +46,33 @@ export function useTestRunner() {
   }, [setProgress, setRunning, setError]);
 
   /**
+   * Validates that the URL is a proper HTTP/HTTPS URL.
+   */
+  const validateUrl = (url: string): string | null => {
+    if (!url.trim()) {
+      return "Please enter a URL";
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (!["http:", "https:"].includes(parsed.protocol)) {
+        return "URL must use http:// or https:// protocol";
+      }
+      return null;
+    } catch {
+      return "Please enter a valid URL (e.g., https://example.com)";
+    }
+  };
+
+  /**
    * Starts a new load test.
    */
   const runTest = useCallback(async () => {
     const config = getConfig();
 
-    if (!config.url) {
-      setError("Please enter a URL");
+    const urlError = validateUrl(config.url);
+    if (urlError) {
+      setError(urlError);
       return;
     }
 

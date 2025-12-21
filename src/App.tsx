@@ -4,7 +4,8 @@
  */
 
 import { usePersistence, useKeyboardShortcuts } from "./hooks";
-import { AppShell, Toolbar, Sidebar, MainContent } from "./layouts";
+import { AppShell, Toolbar, Sidebar, MainContent, StatusBar } from "./layouts";
+import { ToastProvider } from "./components/feedback";
 import * as layoutStyles from "./layouts/AppShell.css";
 
 // Initialize global styles (theme + reset)
@@ -22,15 +23,20 @@ export default function App() {
   useKeyboardShortcuts();
 
   return (
-    <AppShell>
-      {/* Top Toolbar (includes History & Settings popovers) */}
-      <Toolbar />
+    <ToastProvider>
+      <AppShell>
+        {/* Top Toolbar (includes History & Settings popovers) */}
+        <Toolbar />
 
-      {/* Main Layout */}
-      <div className={layoutStyles.mainLayout}>
-        <Sidebar />
-        <MainContent />
-      </div>
-    </AppShell>
+        {/* Main Layout */}
+        <div className={layoutStyles.mainLayout}>
+          <Sidebar />
+          <MainContent />
+        </div>
+
+        {/* Bottom Status Bar */}
+        <StatusBar />
+      </AppShell>
+    </ToastProvider>
   );
 }

@@ -22,12 +22,7 @@ export function Toolbar() {
   return (
     <div className={styles.toolbar} data-tauri-drag-region>
       <div className={styles.toolbarLeft} data-tauri-drag-region>
-        <img
-          src={logoSrc}
-          alt="Zoyla"
-          className={styles.appLogo}
-          data-tauri-drag-region
-        />
+        <img src={logoSrc} alt="Zoyla" className={styles.appLogo} data-tauri-drag-region />
         <h1 className={styles.appTitle} data-tauri-drag-region>
           Zoyla
         </h1>

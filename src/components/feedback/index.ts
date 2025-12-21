@@ -17,3 +17,6 @@ export { StatusBadge } from "./StatusBadge";
 
 /** Error message display with dismiss */
 export { ErrorMessage } from "./ErrorMessage";
+
+/** Toast notification system */
+export { ToastProvider, useToast } from "./Toast";
