@@ -18,7 +18,6 @@ export const sidebar = style({
   flexDirection: "column",
   flexShrink: 0,
   boxShadow: vars.shadow.lg,
-  marginTop: vars.space.md,
 });
 
 export const sidebarForm = style({

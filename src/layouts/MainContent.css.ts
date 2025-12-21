@@ -13,7 +13,6 @@ export const mainContent = style({
   WebkitBackdropFilter: "blur(40px) saturate(180%)",
   border: `1px solid ${vars.color.border.subtle}`,
   borderRadius: vars.radius.lg,
-  marginTop: vars.space.md,
   boxShadow: vars.shadow.lg,
 });
 
