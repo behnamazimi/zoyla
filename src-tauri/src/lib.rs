@@ -10,12 +10,22 @@ use thiserror::Error;
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-// Global cancellation flag
+// Global cancellation flag and test generation counter
 static CANCEL_FLAG: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(false)));
+/// Generation counter to scope cancellation per-test run (prevents cross-test interference)
+static TEST_GENERATION: AtomicU64 = AtomicU64::new(0);
 
 // Progress throttling - stores last emission time as millis since UNIX_EPOCH
 static LAST_PROGRESS_MS: AtomicU64 = AtomicU64::new(0);
 const PROGRESS_THROTTLE_MS: u64 = 50; // ~20 updates per second
+
+// Chart calculation constants
+const THROUGHPUT_BUCKETS: usize = 30;
+const THROUGHPUT_MIN_BUCKETS: usize = 5;
+const HISTOGRAM_BUCKETS: usize = 10;
+const LATENCY_SAMPLE_TARGET: usize = 100;
+const CONCURRENCY_SAMPLE_TARGET: usize = 80;
+const CONCURRENCY_MIN_SAMPLES: usize = 10;
 
 // User-Agent pool for randomization
 static USER_AGENTS: &[&str] = &[
@@ -137,9 +147,10 @@ fn default_timeout() -> f64 {
 }
 
 /// Error type classification for failed requests
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub enum ErrorType {
     /// No error - request succeeded
+    #[default]
     None,
     /// Request timed out waiting for response (server too slow)
     Timeout,
@@ -153,12 +164,6 @@ pub enum ErrorType {
     Redirect,
     /// Other/unknown error
     Other,
-}
-
-impl Default for ErrorType {
-    fn default() -> Self {
-        ErrorType::None
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -264,7 +269,10 @@ pub struct LoadTestStats {
     pub request_timeline: Vec<RequestTimelinePoint>,
 }
 
+/// Calculates the given percentile from a sorted slice of response times.
+/// Returns 0.0 for empty slices.
 #[inline]
+#[must_use]
 fn calculate_percentile(sorted_times: &[f64], percentile: f64) -> f64 {
     if sorted_times.is_empty() {
         return 0.0;
@@ -273,6 +281,8 @@ fn calculate_percentile(sorted_times: &[f64], percentile: f64) -> f64 {
     sorted_times[index.min(sorted_times.len() - 1)]
 }
 
+/// Builds a histogram of response times with the specified number of buckets.
+#[must_use]
 fn build_histogram(times: &[f64], min: f64, max: f64, buckets: usize) -> Vec<HistogramBucket> {
     if times.is_empty() || buckets == 0 {
         return vec![];
@@ -302,29 +312,39 @@ fn build_histogram(times: &[f64], min: f64, max: f64, buckets: usize) -> Vec<His
     histogram
 }
 
+/// Calculates throughput over time by bucketing results into time intervals.
+/// Optimized to O(n) by pre-sorting and using running counters instead of O(n*buckets).
+#[must_use]
 fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f64) -> Vec<ThroughputDataPoint> {
     if results.is_empty() || total_time_secs <= 0.0 {
         return vec![];
     }
     
     // Create time buckets (aim for ~20-50 data points)
-    let num_buckets = 30.min((total_time_secs * 10.0) as usize).max(5);
+    let num_buckets = THROUGHPUT_BUCKETS.min((total_time_secs * 10.0) as usize).max(THROUGHPUT_MIN_BUCKETS);
     let bucket_duration = total_time_secs / num_buckets as f64;
     
+    // Pre-sort results by timestamp for O(n) processing
+    let mut sorted_timestamps: Vec<f64> = results.iter().map(|r| r.timestamp_ms / 1000.0).collect();
+    sorted_timestamps.sort_by(|a, b| a.total_cmp(b));
+    
     let mut throughput_data: Vec<ThroughputDataPoint> = Vec::with_capacity(num_buckets);
+    let mut result_index = 0;
+    let mut cumulative: u32 = 0;
     
     for i in 0..num_buckets {
         let bucket_start = i as f64 * bucket_duration;
         let bucket_end = (i + 1) as f64 * bucket_duration;
+        let mut requests_in_bucket: u32 = 0;
         
-        // Count requests completed in this time bucket
-        let requests_in_bucket = results
-            .iter()
-            .filter(|r| {
-                let t = r.timestamp_ms / 1000.0;
-                t >= bucket_start && t < bucket_end
-            })
-            .count() as u32;
+        // Count requests in this bucket using the sorted order
+        while result_index < sorted_timestamps.len() && sorted_timestamps[result_index] < bucket_end {
+            if sorted_timestamps[result_index] >= bucket_start {
+                requests_in_bucket += 1;
+            }
+            cumulative += 1;
+            result_index += 1;
+        }
         
         // Calculate RPS for this bucket
         let rps = if bucket_duration > 0.0 {
@@ -332,12 +352,6 @@ fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f6
         } else {
             0.0
         };
-        
-        // Cumulative requests up to this point
-        let cumulative = results
-            .iter()
-            .filter(|r| r.timestamp_ms / 1000.0 <= bucket_end)
-            .count() as u32;
         
         throughput_data.push(ThroughputDataPoint {
             time_secs: bucket_end,
@@ -349,16 +363,18 @@ fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f6
     throughput_data
 }
 
+/// Calculates latency data points over time, sampling for chart display.
+#[must_use]
 fn calculate_latency_over_time(results: &[RequestResult]) -> Vec<LatencyDataPoint> {
     if results.is_empty() {
         return vec![];
     }
     
-    // Sort results by timestamp and sample for chart (max ~100 points)
+    // Sort results by timestamp using total_cmp for stable NaN handling
     let mut sorted_results: Vec<_> = results.iter().collect();
-    sorted_results.sort_by(|a, b| a.timestamp_ms.partial_cmp(&b.timestamp_ms).unwrap_or(std::cmp::Ordering::Equal));
+    sorted_results.sort_by(|a, b| a.timestamp_ms.total_cmp(&b.timestamp_ms));
     
-    let sample_rate = (sorted_results.len() / 100).max(1);
+    let sample_rate = (sorted_results.len() / LATENCY_SAMPLE_TARGET).max(1);
     
     sorted_results
         .iter()
@@ -374,6 +390,7 @@ fn calculate_latency_over_time(results: &[RequestResult]) -> Vec<LatencyDataPoin
 
 /// Calculate concurrency over time by tracking when requests start and end.
 /// Returns a scatter plot of time vs concurrent request count.
+#[must_use]
 fn calculate_concurrency_over_time(results: &[RequestResult], total_time_secs: f64) -> Vec<ConcurrencyDataPoint> {
     if results.is_empty() || total_time_secs <= 0.0 {
         return vec![];
@@ -394,8 +411,8 @@ fn calculate_concurrency_over_time(results: &[RequestResult], total_time_secs: f
     
     let mut events = Vec::new();
     for result in results {
-        // Calculate start time: end_time - duration
-        let start_time_ms = result.timestamp_ms - result.duration_ms;
+        // Calculate start time: end_time - duration, with bounds check to prevent negative values
+        let start_time_ms = (result.timestamp_ms - result.duration_ms).max(0.0);
         events.push(Event {
             time_ms: start_time_ms,
             event_type: EventType::Start,
@@ -406,11 +423,11 @@ fn calculate_concurrency_over_time(results: &[RequestResult], total_time_secs: f
         });
     }
     
-    // Sort events by time
-    events.sort_by(|a, b| a.time_ms.partial_cmp(&b.time_ms).unwrap_or(std::cmp::Ordering::Equal));
+    // Sort events by time using total_cmp for stable NaN handling
+    events.sort_by(|a, b| a.time_ms.total_cmp(&b.time_ms));
     
     // Sample concurrency at regular intervals (aim for ~50-100 data points)
-    let num_samples = 80.min((total_time_secs * 10.0) as usize).max(10);
+    let num_samples = CONCURRENCY_SAMPLE_TARGET.min((total_time_secs * 10.0) as usize).max(CONCURRENCY_MIN_SAMPLES);
     let sample_interval_secs = total_time_secs / num_samples as f64;
     
     let mut concurrency_data = Vec::with_capacity(num_samples);
@@ -425,11 +442,7 @@ fn calculate_concurrency_over_time(results: &[RequestResult], total_time_secs: f
         while event_index < events.len() && events[event_index].time_ms <= sample_time_ms {
             match events[event_index].event_type {
                 EventType::Start => current_concurrency += 1,
-                EventType::End => {
-                    if current_concurrency > 0 {
-                        current_concurrency -= 1;
-                    }
-                }
+                EventType::End => current_concurrency = current_concurrency.saturating_sub(1),
             }
             event_index += 1;
         }
@@ -445,17 +458,19 @@ fn calculate_concurrency_over_time(results: &[RequestResult], total_time_secs: f
 
 /// Calculate request timeline: elapsed time vs request index.
 /// Each request is plotted at its start time with its sequential index.
+#[must_use]
 fn calculate_request_timeline(results: &[RequestResult]) -> Vec<RequestTimelinePoint> {
     if results.is_empty() {
         return vec![];
     }
     
     // Sort results by start time (timestamp - duration) to get chronological order
+    // Use total_cmp for stable NaN handling and add bounds check for negative values
     let mut sorted_results: Vec<_> = results.iter().collect();
     sorted_results.sort_by(|a, b| {
-        let a_start = a.timestamp_ms - a.duration_ms;
-        let b_start = b.timestamp_ms - b.duration_ms;
-        a_start.partial_cmp(&b_start).unwrap_or(std::cmp::Ordering::Equal)
+        let a_start = (a.timestamp_ms - a.duration_ms).max(0.0);
+        let b_start = (b.timestamp_ms - b.duration_ms).max(0.0);
+        a_start.total_cmp(&b_start)
     });
     
     // Create timeline points: (start_time_secs, request_index)
@@ -463,7 +478,7 @@ fn calculate_request_timeline(results: &[RequestResult]) -> Vec<RequestTimelineP
         .iter()
         .enumerate()
         .map(|(index, result)| {
-            let start_time_ms = result.timestamp_ms - result.duration_ms;
+            let start_time_ms = (result.timestamp_ms - result.duration_ms).max(0.0);
             RequestTimelinePoint {
                 time_secs: start_time_ms / 1000.0,
                 request_index: (index + 1) as u32,
@@ -503,6 +518,8 @@ struct RequestContext {
     total: u32,
     start_time: Instant,
     cancel_flag: Arc<AtomicBool>,
+    /// Test generation when this context was created (for scoped cancellation)
+    test_generation: u64,
     /// Minimum interval between requests per worker (for rate limiting)
     rate_limit_interval: Option<Duration>,
     randomize_user_agent: bool,
@@ -510,10 +527,18 @@ struct RequestContext {
     add_cache_buster: bool,
 }
 
+/// Check if the current test should be cancelled.
+/// Cancellation is scoped to the test generation to prevent cross-test interference.
+#[inline]
+fn is_cancelled(cancel_flag: &AtomicBool, expected_generation: u64) -> bool {
+    // Only consider cancelled if the flag is set AND we're still on the same generation
+    cancel_flag.load(Ordering::SeqCst) && TEST_GENERATION.load(Ordering::SeqCst) == expected_generation
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<RequestResult>) -> Option<()> {
-    // Check if cancelled before starting
-    if ctx.cancel_flag.load(Ordering::SeqCst) {
+    // Check if cancelled before starting (scoped to this test's generation)
+    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
         return None;
     }
 
@@ -597,17 +622,18 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         request
     }; // rng is dropped here, before any await
     
-    // Check if cancelled before sending
-    if ctx.cancel_flag.load(Ordering::SeqCst) {
+    // Check if cancelled before sending (scoped to this test's generation)
+    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
         return None;
     }
     
-    // Create a cancellation check future that polls periodically
+    // Create a cancellation check future that polls periodically (scoped to test generation)
     let cancel_flag_clone = Arc::clone(&ctx.cancel_flag);
+    let test_generation = ctx.test_generation;
     let cancel_check = async move {
         loop {
             tokio::time::sleep(Duration::from_millis(50)).await;
-            if cancel_flag_clone.load(Ordering::SeqCst) {
+            if is_cancelled(&cancel_flag_clone, test_generation) {
                 return;
             }
         }
@@ -618,8 +644,8 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         response = request.send() => {
             match response {
                 Ok(response) => {
-                    // Check cancellation before reading body
-                    if ctx.cancel_flag.load(Ordering::SeqCst) {
+                    // Check cancellation before reading body (scoped to test generation)
+                    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
                         return None;
                     }
                     let status = response.status().as_u16();
@@ -688,8 +714,8 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         }
     };
     
-    // Check if cancelled after request
-    if ctx.cancel_flag.load(Ordering::SeqCst) {
+    // Check if cancelled after request (scoped to test generation)
+    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
         return None;
     }
 
@@ -745,6 +771,21 @@ async fn run_load_test(app_handle: AppHandle, config: LoadTestConfig) -> Result<
         return Err(LoadTestError::InvalidConfig("URL cannot be empty".into()));
     }
     
+    // Validate URL format
+    match url::Url::parse(&config.url) {
+        Ok(parsed_url) => {
+            // Only allow http and https schemes
+            if parsed_url.scheme() != "http" && parsed_url.scheme() != "https" {
+                return Err(LoadTestError::InvalidConfig(
+                    format!("URL must use http or https scheme, got: {}", parsed_url.scheme())
+                ));
+            }
+        }
+        Err(e) => {
+            return Err(LoadTestError::InvalidConfig(format!("Invalid URL '{}': {}", config.url, e)));
+        }
+    }
+    
     // Determine number of worker threads
     let default_threads = std::thread::available_parallelism()
         .map(|n| n.get())
@@ -754,6 +795,10 @@ async fn run_load_test(app_handle: AppHandle, config: LoadTestConfig) -> Result<
     } else {
         config.worker_threads as usize
     };
+    
+    // Increment test generation to invalidate any previous test's cancellation state
+    // This prevents lingering async tasks from a cancelled test from affecting new tests
+    let _new_generation = TEST_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     
     // Reset cancellation flag and progress throttle at start
     CANCEL_FLAG.store(false, Ordering::SeqCst);
@@ -870,6 +915,9 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
     };
     
     // Create shared request context (without the sender to allow proper channel closing)
+    // Capture the current test generation for scoped cancellation
+    let current_generation = TEST_GENERATION.load(Ordering::SeqCst);
+    
     let base_ctx = Arc::new(RequestContext {
         client,
         url,
@@ -882,6 +930,7 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         total: num_requests,
         start_time: start,
         cancel_flag,
+        test_generation: current_generation,
         rate_limit_interval,
         randomize_user_agent: config.randomize_user_agent,
         randomize_headers: config.randomize_headers,
@@ -896,8 +945,8 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
             let tx = result_tx.clone();
             
             async move {
-                // Check cancellation before waiting for semaphore
-                if ctx.cancel_flag.load(Ordering::SeqCst) {
+                // Check cancellation before waiting for semaphore (scoped to test generation)
+                if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
                     return;
                 }
                 
@@ -912,28 +961,30 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
                             }
                         }
                         _ = tokio::time::sleep(Duration::from_millis(50)) => {
-                            if ctx.cancel_flag.load(Ordering::SeqCst) {
+                            if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
                                 return;
                             }
                         }
                     }
                 };
                 
-                // Check cancellation after acquiring permit
-                if ctx.cancel_flag.load(Ordering::SeqCst) {
+                // Check cancellation after acquiring permit (scoped to test generation)
+                if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
                     drop(permit);
                     return;
                 }
                 
                 // Apply rate limiting delay if configured
                 if let Some(interval) = ctx.rate_limit_interval {
-                    // Check cancellation during rate limit wait
+                    // Check cancellation during rate limit wait (scoped to test generation)
+                    let cancel_flag = Arc::clone(&ctx.cancel_flag);
+                    let gen = ctx.test_generation;
                     tokio::select! {
                         _ = tokio::time::sleep(interval) => {}
                         _ = async {
                             loop {
                                 tokio::time::sleep(Duration::from_millis(50)).await;
-                                if ctx.cancel_flag.load(Ordering::SeqCst) {
+                                if is_cancelled(&cancel_flag, gen) {
                                     return;
                                 }
                             }
@@ -1015,12 +1066,12 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
     // Extract response times for histogram and percentiles
     let response_times: Vec<f64> = results.iter().map(|r| r.duration_ms).collect();
     
-    // Calculate histogram (10 buckets)
-    let histogram = build_histogram(&response_times, min_response_time, max_response_time, 10);
+    // Calculate histogram
+    let histogram = build_histogram(&response_times, min_response_time, max_response_time, HISTOGRAM_BUCKETS);
     
-    // Calculate percentiles
+    // Calculate percentiles using total_cmp for stable NaN handling
     let mut sorted_times = response_times;
-    sorted_times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    sorted_times.sort_by(|a, b| a.total_cmp(b));
     
     let percentiles = LatencyPercentiles {
         p10: calculate_percentile(&sorted_times, 10.0),

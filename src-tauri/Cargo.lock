@@ -5906,6 +5906,7 @@ dependencies = [
  "tauri-plugin-store",
  "thiserror 1.0.69",
  "tokio",
+ "url",
 ]
 
 [[package]]

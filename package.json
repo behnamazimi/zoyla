@@ -1,6 +1,6 @@
 {
   "name": "zoyla",
-  "description": "Fast, lightweight HTTP load testing app for quick, reliable performance insights",
+  "description": "Fast, lightweight HTTP load testing app built with Rust for quick, reliable performance insights",
   "private": true,
   "version": "0.1.7",
   "type": "module",
