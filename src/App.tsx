@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import "./styles";
 
 async function showAppWindow() {
-  const appWindow = (await import('@tauri-apps/api/window')).getCurrentWindow();
+  const appWindow = (await import("@tauri-apps/api/window")).getCurrentWindow();
   appWindow.show();
 }
 
@@ -29,7 +29,7 @@ export default function App() {
   useKeyboardShortcuts();
 
   useEffect(() => {
-    // Reveal the initially hidden app window 
+    // Reveal the initially hidden app window
     showAppWindow();
   }, []);
 

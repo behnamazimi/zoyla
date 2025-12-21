@@ -1,12 +1,16 @@
-# Zoyla
+<div align="center">
+  <img src="./src-tauri/icons/128x128@2x.png" alt="Zoyla - HTTP Load-testing logo" width="128" height="128"/>
+  <h1 align="center">Zoyla</h1>
+  <p align="center">
+  ⚡️ Fast, lightweight HTTP load testing desktop application for quick, reliable performance insights.
+  </p>
+</div>
 
-Fast, lightweight HTTP load testing desktop application for quick, reliable performance insights.
-
-![Zoyla - HTTP Load-testing](./ss.png)
-
-## Overview
+---
 
 Zoyla is a desktop application that provides a simple, intuitive interface for running HTTP load tests without the complexity of enterprise testing suites.
+
+![Zoyla - HTTP Load-testing](./ss.png)
 
 ## Target Users
 
