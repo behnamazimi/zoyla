@@ -67,6 +67,44 @@ xattr -cr ~/Downloads/zoyla-*.dmg
 
 Then open the app normally.
 
+### Windows
+
+The Windows installer is not code-signed, so you may see security warnings during installation.
+
+**Windows Defender SmartScreen:**
+
+When you run the installer, you may see "Windows protected your PC" message. To proceed:
+
+1. Click **"More info"**
+2. Click **"Run anyway"**
+
+**Browser download warning:**
+
+Your browser may also warn that the file could be dangerous. Click "Keep" or "Keep anyway" to download the file.
+
+### Linux (Debian/Ubuntu)
+
+Download the appropriate `.deb` file based on your system architecture:
+
+- **ARM64** (e.g., Raspberry Pi, Apple Silicon VMs): `zoyla-*-linux-arm64.deb`
+- **x64** (Intel/AMD): `zoyla-*-linux-x64.deb`
+
+**Install using apt (recommended):**
+
+```bash
+sudo apt install ./zoyla-*-linux-*.deb
+```
+
+**Or using dpkg:**
+
+```bash
+sudo dpkg -i zoyla-*-linux-*.deb
+# If there are missing dependencies:
+sudo apt-get install -f
+```
+
+After installation, run `zoyla` from the terminal or find it in your applications menu.
+
 ### From Source
 
 **Prerequisites:**
