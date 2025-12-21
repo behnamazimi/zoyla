@@ -2,7 +2,7 @@
  * Results Feature Styles
  */
 
-import { style } from "@vanilla-extract/css";
+import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../../styles/theme.css";
 import { fadeIn } from "../../styles/global.css";
 
@@ -52,11 +52,24 @@ export const errorIndicator = style({
   gap: vars.space.xs,
   fontSize: vars.font.size.sm,
   fontWeight: vars.font.weight.semibold,
-  color: vars.color.danger.base,
-  background: vars.color.danger.subtle,
   padding: `2px ${vars.space.sm}`,
   borderRadius: vars.radius.sm,
   marginLeft: vars.space.sm,
+});
+
+export const errorIndicatorVariants = styleVariants({
+  success: {
+    color: vars.color.success.base,
+    background: vars.color.success.subtle,
+  },
+  warning: {
+    color: vars.color.warning.base,
+    background: vars.color.warning.subtle,
+  },
+  error: {
+    color: vars.color.danger.base,
+    background: vars.color.danger.subtle,
+  },
 });
 
 export const resultsActions = style({

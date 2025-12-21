@@ -4,7 +4,7 @@
  */
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Download, FileJson, FileSpreadsheet, X, AlertTriangle } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, X } from "lucide-react";
 import { useTestRunnerStore, useTestConfigStore, useHistoryStore } from "../../store";
 import { exportAsJson, exportAsCsv } from "../../services/export";
 import { Tooltip } from "../../components/buttons";
@@ -96,7 +96,8 @@ export function ResultsContainer() {
     selectEntry(null);
   };
 
-  const hasErrors = stats.failed_requests > 0;
+  const successRate = stats.successful_requests / (stats.successful_requests + stats.failed_requests);
+  const statusVariant = successRate >= 0.95 ? "success" : successRate >= 0.8 ? "warning" : "error";
 
   return (
     <div className={styles.resultsContainer}>
@@ -106,12 +107,9 @@ export function ResultsContainer() {
           {testStartTime && (
             <span className={styles.resultsTimestamp}>{formatTestTime(testStartTime)}</span>
           )}
-          {hasErrors && (
-            <span className={styles.errorIndicator}>
-              <AlertTriangle size={12} />
-              {stats.failed_requests} failed
-            </span>
-          )}
+          <span className={`${styles.errorIndicator} ${styles.errorIndicatorVariants[statusVariant]}`}>
+            {(successRate * 100).toFixed(0)}% success
+          </span>
         </div>
         <div className={styles.resultsActions}>
           <Tooltip content="Export results">
