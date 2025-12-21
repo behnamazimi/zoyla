@@ -49,6 +49,24 @@ Zoyla fills the gap between basic `curl` tests and full performance suites like 
 
 Download the latest release for your platform from the [Releases page](https://github.com/behnamazimi/zoyla/releases) and install the desktop application.
 
+### macOS
+
+After downloading, you may see **"zoyla is damaged and can't be opened"** error.
+
+This happens because the app isn't signed with an Apple Developer certificate. To fix this, open Terminal and run:
+
+```bash
+xattr -cr /Applications/zoyla.app
+```
+
+Or if you downloaded the `.dmg` file:
+
+```bash
+xattr -cr ~/Downloads/zoyla-*.dmg
+```
+
+Then open the app normally.
+
 ### From Source
 
 **Prerequisites:**
