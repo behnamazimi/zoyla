@@ -22,8 +22,15 @@ export const toolbar = style({
 export const toolbarLeft = style({
   display: "flex",
   alignItems: "center",
-  gap: vars.space.sm,
+  gap: vars.space.xs,
   // Allow dragging from the title area too
+  // @ts-expect-error - WebkitAppRegion is a Tauri-specific property for window dragging
+  WebkitAppRegion: "drag",
+});
+
+export const appLogo = style({
+  width: "24px",
+  height: "24px",
   // @ts-expect-error - WebkitAppRegion is a Tauri-specific property for window dragging
   WebkitAppRegion: "drag",
 });

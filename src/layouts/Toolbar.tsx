@@ -3,6 +3,7 @@
  */
 
 import { Github } from "lucide-react";
+import { useUIStore } from "../store";
 import { HistoryPanel } from "../features/history";
 import { LayoutSettings } from "../features/settings";
 import { KeyboardGuide } from "../features/shortcuts";
@@ -15,9 +16,18 @@ const GITHUB_URL = "https://github.com/behnamazimi/zoyla";
  * Application toolbar with global actions.
  */
 export function Toolbar() {
+  const theme = useUIStore((s) => s.theme);
+  const logoSrc = theme === "light" ? "/logo-light.svg" : "/logo-dark.svg";
+
   return (
     <div className={styles.toolbar} data-tauri-drag-region>
       <div className={styles.toolbarLeft} data-tauri-drag-region>
+        <img
+          src={logoSrc}
+          alt="Zoyla"
+          className={styles.appLogo}
+          data-tauri-drag-region
+        />
         <h1 className={styles.appTitle} data-tauri-drag-region>
           Zoyla
         </h1>

@@ -36,6 +36,12 @@ export const emptyStateIcon = style({
   color: vars.color.text.secondary,
 });
 
+export const emptyStateLogo = style({
+  width: "120px",
+  height: "auto",
+  marginBottom: vars.space.lg,
+});
+
 export const emptyStateTitle = style({
   fontSize: vars.font.size.xxxl,
   fontWeight: vars.font.weight.semibold,
