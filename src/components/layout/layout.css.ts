@@ -84,6 +84,22 @@ export const resizeHandle = style({
   cursor: "col-resize",
   zIndex: 10,
   transition: `background ${vars.transition.fast}`,
+  // Grip indicator - always visible
+  "::before": {
+    content: '""',
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "4px",
+    height: "40px",
+    background: `radial-gradient(circle, ${vars.color.border.focus} 1px, transparent 0.5px)`,
+    backgroundSize: "4px 6px",
+    backgroundPosition: "center",
+    opacity: 0.3,
+    transition: `opacity ${vars.transition.fast}`,
+  },
+  // Hover highlight bar
   "::after": {
     content: '""',
     position: "absolute",
@@ -97,8 +113,14 @@ export const resizeHandle = style({
     transition: `background ${vars.transition.fast}`,
   },
   selectors: {
+    "&:hover::before": {
+      opacity: 0,
+    },
     "&:hover::after": {
       background: vars.color.primary.base,
+    },
+    "&:active::before": {
+      opacity: 0,
     },
     "&:active::after": {
       background: vars.color.primary.base,

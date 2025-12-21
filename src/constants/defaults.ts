@@ -18,10 +18,10 @@ export const HTTP_METHODS: HttpMethod[] = [
 
 /** Default test configuration */
 export const DEFAULT_TEST_CONFIG: TestConfigState = {
-  url: "https://httpbin.org/get",
+  url: "",
   method: "GET",
   numRequests: 100,
-  concurrency: 100,
+  concurrency: 50,
   useHttp2: false,
   headers: [],
   followRedirects: true,
