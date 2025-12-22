@@ -114,3 +114,105 @@ export const correlationBadge = style({
   borderRadius: vars.radius.sm,
   zIndex: 10,
 });
+
+// Chart info button - matches copy button style
+export const chartInfoButton = style({
+  position: "relative",
+  width: "28px",
+  height: "28px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: vars.color.bg.input,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.sm,
+  cursor: "pointer",
+  transition: `all ${vars.transition.normal}`,
+  opacity: 0.5,
+  padding: 0,
+  ":hover": {
+    opacity: 1,
+    background: vars.color.primary.subtle,
+    borderColor: vars.color.primary.base,
+    transform: "scale(1.05)",
+  },
+  ":active": {
+    transform: "scale(0.95)",
+  },
+  ":focus-visible": {
+    outline: `2px solid ${vars.color.primary.base}`,
+    outlineOffset: "2px",
+  },
+});
+
+export const chartInfoIcon = style({
+  width: "14px",
+  height: "14px",
+  color: vars.color.text.secondary,
+  transition: `all ${vars.transition.fast}`,
+  selectors: {
+    [`${chartInfoButton}:hover &`]: {
+      color: vars.color.primary.base,
+    },
+  },
+});
+
+// Chart info popover
+export const chartInfoPopover = style({
+  background: vars.color.bg.overlay,
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  border: `1px solid ${vars.color.border.subtle}`,
+  borderRadius: vars.radius.md,
+  padding: 0,
+  boxShadow: vars.shadow.lg,
+  maxWidth: "320px",
+  zIndex: vars.zIndex.dropdown,
+  animationDuration: "150ms",
+  animationTimingFunction: "ease",
+});
+
+export const chartInfoContent = style({
+  padding: vars.space.md,
+});
+
+export const chartInfoTitle = style({
+  fontSize: vars.font.size.md,
+  fontWeight: vars.font.weight.semibold,
+  color: vars.color.text.primary,
+  margin: `0 0 ${vars.space.sm} 0`,
+});
+
+export const chartInfoDescription = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.secondary,
+  lineHeight: vars.font.lineHeight.relaxed,
+  margin: `0 0 ${vars.space.md} 0`,
+});
+
+export const chartInfoSection = style({
+  marginTop: vars.space.md,
+  paddingTop: vars.space.md,
+  borderTop: `1px solid ${vars.color.border.subtle}`,
+});
+
+export const chartInfoLabel = style({
+  display: "block",
+  fontSize: vars.font.size.sm,
+  fontWeight: vars.font.weight.semibold,
+  color: vars.color.text.primary,
+  marginBottom: vars.space.xs,
+});
+
+export const chartInfoText = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.secondary,
+  lineHeight: vars.font.lineHeight.relaxed,
+  margin: 0,
+});
+
+export const chartInfoArrow = style({
+  fill: vars.color.bg.overlay,
+  stroke: vars.color.border.default,
+  strokeWidth: 1,
+});

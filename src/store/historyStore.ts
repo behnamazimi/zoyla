@@ -8,6 +8,7 @@ import type { HistoryState, HistoryActions, TestConfigState } from "../types/sto
 import type { LoadTestStats, HistoryEntry } from "../types/api";
 import { loadHistory, saveHistory } from "../services/storage";
 import { MAX_HISTORY_ENTRIES } from "../constants/defaults";
+import { parseHeaders } from "../utils/headers";
 
 type HistoryStore = HistoryState & HistoryActions;
 
@@ -16,6 +17,20 @@ type HistoryStore = HistoryState & HistoryActions;
  */
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Creates a lightweight version of LoadTestStats for history storage.
+ * Strips the large `results` array to reduce memory and storage overhead.
+ * For 10K+ request tests, this can save megabytes of storage per entry.
+ */
+function createLightweightStats(stats: LoadTestStats): LoadTestStats {
+  return {
+    ...stats,
+    // Strip the full results array - it can contain 10K+ items
+    // Keep only the aggregated data needed for display
+    results: [],
+  };
 }
 
 /**
@@ -29,6 +44,9 @@ export const useHistoryStore = create<HistoryStore>()((set, get) => ({
 
   // Actions
   addEntry: (stats: LoadTestStats, config: TestConfigState) => {
+    // Create lightweight stats without the large results array
+    const lightweightStats = createLightweightStats(stats);
+
     const entry: HistoryEntry = {
       id: generateId(),
       timestamp: Date.now(),
@@ -37,9 +55,10 @@ export const useHistoryStore = create<HistoryStore>()((set, get) => ({
       numRequests: config.numRequests,
       concurrency: config.concurrency,
       useHttp2: config.useHttp2,
-      headers: config.headers
-        .filter((h) => h.key.trim() !== "")
-        .map((h) => ({ key: h.key, value: h.value })),
+      headers:
+        config.headers && config.headers.trim() !== ""
+          ? parseHeaders(config.headers).map((h) => ({ key: h.key, value: h.value }))
+          : undefined,
       followRedirects: config.followRedirects,
       timeoutSecs: config.timeoutSecs,
       rateLimit: config.rateLimit,
@@ -49,12 +68,13 @@ export const useHistoryStore = create<HistoryStore>()((set, get) => ({
       disableKeepAlive: config.disableKeepAlive,
       workerThreads: config.workerThreads,
       proxyUrl: config.proxyUrl,
+      body: config.body || undefined,
       totalTimeSecs: stats.total_time_secs,
       requestsPerSecond: stats.requests_per_second,
       avgResponseMs: stats.avg_response_time_ms,
       successfulRequests: stats.successful_requests,
       failedRequests: stats.failed_requests,
-      stats,
+      stats: lightweightStats,
     };
 
     const newEntries = [entry, ...get().entries].slice(0, MAX_HISTORY_ENTRIES);

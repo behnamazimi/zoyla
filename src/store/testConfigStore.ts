@@ -7,6 +7,8 @@ import { create } from "zustand";
 import type { TestConfigState, TestConfigActions } from "../types/store";
 import type { HttpMethod, TestConfig, HistoryEntry } from "../types/api";
 import { DEFAULT_TEST_CONFIG } from "../constants/defaults";
+import { detectContentType } from "../utils/payload";
+import { parseHeaders, formatHeaders } from "../utils/headers";
 
 type TestConfigStore = TestConfigState & TestConfigActions;
 
@@ -47,20 +49,9 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
 
   setProxyUrl: (proxyUrl: string) => set({ proxyUrl }),
 
-  addHeader: () =>
-    set((state) => ({
-      headers: [...state.headers, { id: Date.now().toString(), key: "", value: "" }],
-    })),
+  setBody: (body: string) => set({ body }),
 
-  updateHeader: (id: string, field: "key" | "value", value: string) =>
-    set((state) => ({
-      headers: state.headers.map((h) => (h.id === id ? { ...h, [field]: value } : h)),
-    })),
-
-  removeHeader: (id: string) =>
-    set((state) => ({
-      headers: state.headers.filter((h) => h.id !== id),
-    })),
+  setHeaders: (headers: string) => set({ headers }),
 
   setFromHistoryEntry: (entry: HistoryEntry) =>
     set({
@@ -69,11 +60,7 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
       numRequests: entry.numRequests,
       concurrency: entry.concurrency || 10,
       useHttp2: entry.useHttp2,
-      headers: (entry.headers ?? []).map((h, index) => ({
-        id: `${Date.now()}-${index}`,
-        key: h.key,
-        value: h.value,
-      })),
+      headers: entry.headers ? formatHeaders(entry.headers) : "",
       followRedirects: entry.followRedirects ?? true,
       timeoutSecs: entry.timeoutSecs ?? 20,
       rateLimit: entry.rateLimit ?? 0,
@@ -83,6 +70,7 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
       disableKeepAlive: entry.disableKeepAlive ?? false,
       workerThreads: entry.workerThreads ?? 0,
       proxyUrl: entry.proxyUrl ?? "",
+      body: entry.body ?? "",
     }),
 
   resetToDefaults: () =>
@@ -92,15 +80,17 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
 
   getConfig: (): TestConfig => {
     const state = get();
+    // Auto-detect content type from body if body is present
+    const contentType =
+      state.body && state.body.trim() !== "" ? detectContentType(state.body) : null;
+
     return {
       url: state.url,
       method: state.method,
       num_requests: state.numRequests,
       concurrency: state.concurrency,
       use_http2: state.useHttp2,
-      headers: state.headers
-        .filter((h) => h.key.trim() !== "")
-        .map((h) => ({ key: h.key, value: h.value })),
+      headers: parseHeaders(state.headers),
       follow_redirects: state.followRedirects,
       timeout_secs: state.timeoutSecs,
       rate_limit: state.rateLimit,
@@ -110,6 +100,8 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
       disable_keep_alive: state.disableKeepAlive,
       worker_threads: state.workerThreads,
       proxy_url: state.proxyUrl,
+      body: state.body || null,
+      payload_content_type: contentType,
     };
   },
 }));

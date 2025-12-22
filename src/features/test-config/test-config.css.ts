@@ -517,3 +517,184 @@ export const advancedInputWide = style({
     color: vars.color.text.muted,
   },
 });
+
+// Payload editor
+export const payloadContainer = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space.sm,
+});
+
+export const payloadTextarea = style({
+  width: "100%",
+  padding: vars.space.sm,
+  fontFamily: vars.font.family.mono,
+  fontSize: vars.font.size.sm,
+  lineHeight: "1.5",
+  color: vars.color.text.primary,
+  background: vars.color.bg.input,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.sm,
+  outline: "none",
+  resize: "vertical",
+  transition: `all ${vars.transition.fast}`,
+  "::placeholder": {
+    color: vars.color.text.muted,
+  },
+  ":focus": {
+    background: vars.color.bg.inputFocus,
+    borderColor: vars.color.border.focus,
+    boxShadow: `0 0 0 3px ${vars.color.primary.ring}`,
+  },
+  ":disabled": {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
+});
+
+export const jsonError = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.danger.base,
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  background: vars.color.danger.subtle,
+  borderRadius: vars.radius.sm,
+  border: `1px solid ${vars.color.danger.base}`,
+});
+
+export const payloadHint = style({
+  fontSize: vars.font.size.xs,
+  color: vars.color.text.muted,
+  fontStyle: "italic",
+});
+
+export const payloadSmartHint = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.secondary,
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  background: vars.color.primary.subtle,
+  borderRadius: vars.radius.sm,
+  border: `1px solid ${vars.color.primary.base}`,
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.xs,
+});
+
+// Concurrency hint styles
+export const concurrencyHint = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: vars.space.sm,
+});
+
+export const concurrencyHintText = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.muted,
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.sm,
+});
+
+export const concurrencyApplyBtn = style({
+  fontSize: vars.font.size.xs,
+  fontWeight: vars.font.weight.semibold,
+  color: vars.color.primary.base,
+  background: "transparent",
+  border: "none",
+  padding: `2px ${vars.space.xs}`,
+  borderRadius: vars.radius.sm,
+  cursor: "pointer",
+  transition: `all ${vars.transition.fast}`,
+  ":hover": {
+    background: vars.color.primary.subtle,
+    textDecoration: "underline",
+  },
+  ":disabled": {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
+});
+
+export const concurrencyInfoBtn = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "24px",
+  height: "24px",
+  background: "transparent",
+  border: "none",
+  borderRadius: vars.radius.sm,
+  color: vars.color.text.muted,
+  cursor: "pointer",
+  transition: `all ${vars.transition.fast}`,
+  flexShrink: 0,
+  ":hover": {
+    background: vars.color.bg.surfaceHover,
+    color: vars.color.text.secondary,
+  },
+});
+
+export const concurrencyInfoPopover = style({
+  background: vars.color.bg.overlay,
+  backdropFilter: "blur(20px)",
+  border: `1px solid ${vars.color.border.subtle}`,
+  borderRadius: vars.radius.md,
+  boxShadow: vars.shadow.lg,
+  padding: vars.space.md,
+  width: "280px",
+  zIndex: vars.zIndex.dropdown,
+});
+
+export const concurrencyInfoTitle = style({
+  fontSize: vars.font.size.sm,
+  fontWeight: vars.font.weight.semibold,
+  color: vars.color.text.primary,
+  marginBottom: vars.space.sm,
+});
+
+export const concurrencyInfoList = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.secondary,
+  listStyle: "none",
+  padding: 0,
+  margin: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space.xs,
+});
+
+export const concurrencyWarnings = style({
+  marginTop: vars.space.sm,
+  paddingTop: vars.space.sm,
+  borderTop: `1px solid ${vars.color.border.subtle}`,
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space.xs,
+});
+
+export const concurrencyWarning = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.warning.base,
+});
+
+export const concurrencyInfoFooter = style({
+  fontSize: vars.font.size.xs,
+  color: vars.color.text.muted,
+  marginTop: vars.space.sm,
+  paddingTop: vars.space.sm,
+  borderTop: `1px solid ${vars.color.border.subtle}`,
+});
+
+export const concurrencyInfoNote = style({
+  fontSize: vars.font.size.xs,
+  color: vars.color.text.secondary,
+  marginTop: vars.space.sm,
+  padding: vars.space.sm,
+  background: vars.color.bg.surface,
+  borderRadius: vars.radius.sm,
+  lineHeight: 1.5,
+});
+
+export const concurrencyInfoArrow = style({
+  fill: vars.color.bg.overlay,
+});

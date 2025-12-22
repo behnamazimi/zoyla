@@ -1,8 +1,10 @@
 /**
  * BarChartPanel - Generic bar chart component
  * Pure presentational component with no store access.
+ * Memoized to prevent unnecessary re-renders.
  */
 
+import { memo } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartColors } from "./useChartColors";
@@ -20,8 +22,9 @@ interface BarChartPanelProps {
 
 /**
  * A responsive bar chart.
+ * Memoized to only re-render when data or configuration changes.
  */
-export function BarChartPanel({
+export const BarChartPanel = memo(function BarChartPanel({
   data,
   xKey,
   yKey,
@@ -41,9 +44,9 @@ export function BarChartPanel({
           <XAxis dataKey={xKey} stroke={axisColor} fontSize={10} tickFormatter={xFormatter} />
           <YAxis stroke={axisColor} fontSize={10} />
           <Tooltip content={<ChartTooltip unit="requests" />} />
-          <Bar dataKey={yKey} fill={barColor} radius={[4, 4, 0, 0]} />
+          <Bar dataKey={yKey} fill={barColor} radius={[4, 4, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
-}
+});

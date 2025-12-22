@@ -2,14 +2,7 @@
  * Store Types - State and action types for Zustand stores
  */
 
-import type {
-  HttpMethod,
-  CustomHeader,
-  TestConfig,
-  LoadTestStats,
-  ProgressUpdate,
-  HistoryEntry,
-} from "./api";
+import type { HttpMethod, TestConfig, LoadTestStats, ProgressUpdate, HistoryEntry } from "./api";
 
 /** Layout settings for toggling chart visibility */
 export interface LayoutSettings {
@@ -31,7 +24,7 @@ export interface TestConfigState {
   numRequests: number;
   concurrency: number;
   useHttp2: boolean;
-  headers: CustomHeader[];
+  headers: string; // Headers as textarea text (format: "Header-Name: value")
   followRedirects: boolean;
   /** Timeout for each request in seconds. 0 means infinite. */
   timeoutSecs: number;
@@ -46,6 +39,8 @@ export interface TestConfigState {
   workerThreads: number;
   /** HTTP proxy address in format "host:port" or "http://host:port". Empty string means no proxy. */
   proxyUrl: string;
+  /** Request body payload (optional, used for POST, PUT, PATCH methods). Empty string means no body. */
+  body: string;
 }
 
 /** Test configuration actions */
@@ -55,9 +50,7 @@ export interface TestConfigActions {
   setNumRequests: (count: number) => void;
   setConcurrency: (count: number) => void;
   setUseHttp2: (enabled: boolean) => void;
-  addHeader: () => void;
-  updateHeader: (id: string, field: "key" | "value", value: string) => void;
-  removeHeader: (id: string) => void;
+  setHeaders: (headers: string) => void;
   setFromHistoryEntry: (entry: HistoryEntry) => void;
   resetToDefaults: () => void;
   getConfig: () => TestConfig;
@@ -70,6 +63,7 @@ export interface TestConfigActions {
   setDisableKeepAlive: (enabled: boolean) => void;
   setWorkerThreads: (threads: number) => void;
   setProxyUrl: (url: string) => void;
+  setBody: (body: string) => void;
 }
 
 /** Test runner state */
@@ -97,6 +91,7 @@ export interface UIState {
   showHistory: boolean;
   showLayoutSettings: boolean;
   showHeaders: boolean;
+  showPayload: boolean;
   showErrorLogs: boolean;
   showKeyboardGuide: boolean;
   layoutSettings: LayoutSettings;
@@ -109,6 +104,7 @@ export interface UIActions {
   setShowHistory: (show: boolean) => void;
   setShowLayoutSettings: (show: boolean) => void;
   setShowHeaders: (show: boolean) => void;
+  setShowPayload: (show: boolean) => void;
   setShowErrorLogs: (show: boolean) => void;
   setShowKeyboardGuide: (show: boolean) => void;
   updateLayoutSettings: (settings: Partial<LayoutSettings>) => void;

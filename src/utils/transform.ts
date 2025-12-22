@@ -1,8 +1,12 @@
 /**
  * Transform Utilities - Data transformations for charts
+ * Includes downsampling for performance with large datasets.
  */
 
 import type { LoadTestStats, HistogramBucket, LatencyPercentiles } from "../types/api";
+
+// Maximum data points for chart rendering performance
+const MAX_CHART_POINTS = 500;
 
 /** Chart data point for histogram */
 export interface HistogramChartData {
@@ -16,6 +20,32 @@ export interface PercentileChartData {
   percentile: string;
   value: number;
   label: string;
+}
+
+/**
+ * Downsamples an array to a maximum number of points.
+ * Uses uniform sampling to preserve data distribution.
+ * Always includes first and last points for accurate range display.
+ * @param data - Array to downsample
+ * @param maxPoints - Maximum number of points to return
+ * @returns Downsampled array
+ */
+function downsample<T>(data: T[], maxPoints: number = MAX_CHART_POINTS): T[] {
+  if (data.length <= maxPoints) {
+    return data;
+  }
+
+  const sampleRate = Math.ceil(data.length / maxPoints);
+  const result: T[] = [];
+
+  for (let i = 0; i < data.length; i++) {
+    // Include point if it's at sample interval, first, or last
+    if (i % sampleRate === 0 || i === data.length - 1) {
+      result.push(data[i]);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -50,6 +80,7 @@ export function transformPercentileData(percentiles: LatencyPercentiles): Percen
 
 /**
  * Transforms request timeline data for scatter plot display.
+ * Downsamples to MAX_CHART_POINTS for performance with large datasets.
  * @param stats - Full test statistics
  * @returns Array of scatter plot data points (time_secs, request_index)
  */
@@ -60,7 +91,10 @@ export function transformRequestTimelineData(
     return [];
   }
 
-  return stats.request_timeline.map((point) => ({
+  // Downsample if needed for performance
+  const sampled = downsample(stats.request_timeline);
+
+  return sampled.map((point) => ({
     time_secs: point.time_secs,
     request_index: point.request_index,
   }));

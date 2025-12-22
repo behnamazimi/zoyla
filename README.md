@@ -55,7 +55,15 @@ Download the latest release for your platform from the [Releases page](https://g
 
 ### macOS
 
-After downloading, you may see **"zoyla is damaged and can't be opened"** error.
+**Using Homebrew (recommended):**
+
+```bash
+brew install behnamazimi/zoyla/zoyla
+```
+
+**Manual download:**
+
+Download from the [Releases page](https://github.com/behnamazimi/zoyla/releases). After downloading, you may see **"zoyla is damaged and can't be opened"** error.
 
 This happens because the app isn't signed with an Apple Developer certificate. To fix this, open Terminal and run:
 

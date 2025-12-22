@@ -1,8 +1,10 @@
 /**
  * LineChartPanel - Generic line chart component
  * Pure presentational component with no store access.
+ * Memoized to prevent unnecessary re-renders.
  */
 
+import { memo } from "react";
 import {
   LineChart,
   Line,
@@ -29,8 +31,9 @@ interface LineChartPanelProps {
 
 /**
  * A responsive line chart.
+ * Memoized to only re-render when data or configuration changes.
  */
-export function LineChartPanel({
+export const LineChartPanel = memo(function LineChartPanel({
   data,
   xKey,
   yKey,
@@ -51,9 +54,16 @@ export function LineChartPanel({
           <XAxis dataKey={xKey} stroke={axisColor} fontSize={10} tickFormatter={xFormatter} />
           <YAxis stroke={axisColor} fontSize={10} tickFormatter={yFormatter} />
           <Tooltip content={<ChartTooltip unit="ms" />} />
-          <Line type="monotone" dataKey={yKey} stroke={lineColor} strokeWidth={2} dot={false} />
+          <Line
+            type="monotone"
+            dataKey={yKey}
+            stroke={lineColor}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>
   );
-}
+});

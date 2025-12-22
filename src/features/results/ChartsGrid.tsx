@@ -1,9 +1,10 @@
 /**
  * ChartsGrid - Grid of result charts
  * Container component connecting to stores.
+ * Uses memoization to prevent unnecessary re-renders and data transformations.
  */
 
-import { useRef } from "react";
+import { useRef, useMemo, memo } from "react";
 import { useTestRunnerStore, useUIStore } from "../../store";
 import { Panel } from "../../components/layout";
 import {
@@ -12,6 +13,7 @@ import {
   BarChartPanel,
   ScatterChartPanel,
   useChartColors,
+  ChartInfoButton,
 } from "../../components/charts";
 import {
   transformHistogramData,
@@ -24,8 +26,9 @@ import * as chartStyles from "../../components/charts/charts.css";
 
 /**
  * Displays all result charts based on layout settings.
+ * Memoized to prevent unnecessary re-renders when unrelated state changes.
  */
-export function ChartsGrid() {
+export const ChartsGrid = memo(function ChartsGrid() {
   const stats = useTestRunnerStore((s) => s.stats);
   const layoutSettings = useUIStore((s) => s.layoutSettings);
   const { primaryColor, successColor, warningColor } = useChartColors();
@@ -36,11 +39,23 @@ export function ChartsGrid() {
   const percentileRef = useRef<HTMLDivElement>(null);
   const correlationRef = useRef<HTMLDivElement>(null);
 
-  if (!stats) return null;
+  // Memoize data transformations to avoid recalculating on every render
+  const histogramData = useMemo(
+    () => (stats ? transformHistogramData(stats.histogram) : []),
+    [stats?.histogram]
+  );
 
-  const histogramData = transformHistogramData(stats.histogram);
-  const percentileData = transformPercentileData(stats.percentiles);
-  const timelineData = transformRequestTimelineData(stats);
+  const percentileData = useMemo(
+    () => (stats ? transformPercentileData(stats.percentiles) : []),
+    [stats?.percentiles]
+  );
+
+  const timelineData = useMemo(
+    () => (stats ? transformRequestTimelineData(stats) : []),
+    [stats?.request_timeline]
+  );
+
+  if (!stats) return null;
 
   return (
     <div className={styles.chartsGrid}>
@@ -51,6 +66,13 @@ export function ChartsGrid() {
           title="Throughput Over Time"
           copyable
           copyTitle="Throughput Chart"
+          headerAction={
+            <ChartInfoButton
+              title="Throughput Over Time"
+              description="Shows requests per second (RPS) at different points during the test. Higher values indicate better performance."
+              howToRead="The chart displays RPS over time. It starts at zero because requests take time to complete - the first few hundred milliseconds show 0 RPS until the first responses arrive. A steady high line means consistent performance. Dips indicate slowdowns. The area under the curve represents total throughput."
+            />
+          }
         >
           <AreaChartPanel
             data={stats.throughput_over_time}
@@ -65,7 +87,19 @@ export function ChartsGrid() {
 
       {/* Latency Over Time */}
       {layoutSettings.showLatencyChart && (
-        <Panel ref={latencyRef} title="Latency Over Time" copyable copyTitle="Latency Chart">
+        <Panel
+          ref={latencyRef}
+          title="Latency Over Time"
+          copyable
+          copyTitle="Latency Chart"
+          headerAction={
+            <ChartInfoButton
+              title="Latency Over Time"
+              description="Shows individual request response times as they occurred during the test. Lower values indicate faster responses."
+              howToRead="Each point represents one request's latency. A flat line means consistent performance. Spikes indicate temporary slowdowns. Upward trends suggest performance degradation under load."
+            />
+          }
+        >
           <LineChartPanel
             data={stats.latency_over_time}
             xKey="timestamp_ms"
@@ -84,6 +118,13 @@ export function ChartsGrid() {
           title="Response Time Distribution"
           copyable
           copyTitle="Distribution Chart"
+          headerAction={
+            <ChartInfoButton
+              title="Response Time Distribution"
+              description="Shows how many requests fell into each latency range (bucket). Helps identify the most common response times."
+              howToRead="Each bar represents a range of response times. Taller bars mean more requests in that range. A left-skewed distribution (taller bars on the left) indicates fast responses. Right-skewed means many slow requests."
+            />
+          }
         >
           <BarChartPanel
             data={histogramData}
@@ -102,6 +143,13 @@ export function ChartsGrid() {
           title="Latency Percentiles"
           copyable
           copyTitle="Percentiles Chart"
+          headerAction={
+            <ChartInfoButton
+              title="Latency Percentiles"
+              description="Shows response time percentiles (p10, p25, p50, p75, p90, p95, p99). Percentiles tell you what latency most users experience."
+              howToRead="p50 (median) is the middle value - half of requests were faster. p90 means 90% of requests were faster. p99 shows the worst 1% of requests. Lower values are better. A steep curve indicates inconsistent performance."
+            />
+          }
         >
           <AreaChartPanel
             data={percentileData}
@@ -132,6 +180,13 @@ export function ChartsGrid() {
           title="Request Timeline"
           copyable
           copyTitle="Request Timeline Chart"
+          headerAction={
+            <ChartInfoButton
+              title="Request Timeline"
+              description="Shows when each request started relative to the test start time. Helps visualize request distribution and concurrency patterns."
+              howToRead="Each point represents a request. X-axis is elapsed time, Y-axis is request number. A diagonal line means steady request rate. Gaps indicate pauses. Clustering shows bursts of activity."
+            />
+          }
         >
           <ScatterChartPanel
             data={timelineData}
@@ -150,4 +205,4 @@ export function ChartsGrid() {
       )}
     </div>
   );
-}
+});

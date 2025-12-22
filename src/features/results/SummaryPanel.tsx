@@ -1,9 +1,10 @@
 /**
  * SummaryPanel - Test results summary cards
  * Container component connecting to testRunnerStore.
+ * Memoized to prevent unnecessary re-renders.
  */
 
-import { useRef } from "react";
+import { useRef, memo } from "react";
 import { useTestRunnerStore } from "../../store";
 import { StatCard } from "../../components/feedback";
 import { Panel } from "../../components/layout";
@@ -15,8 +16,9 @@ const SLOW_RESPONSE_THRESHOLD_MS = 1000;
 
 /**
  * Displays summary statistics cards.
+ * Memoized to only re-render when stats change.
  */
-export function SummaryPanel() {
+export const SummaryPanel = memo(function SummaryPanel() {
   const stats = useTestRunnerStore((s) => s.stats);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -49,4 +51,4 @@ export function SummaryPanel() {
       </div>
     </Panel>
   );
-}
+});

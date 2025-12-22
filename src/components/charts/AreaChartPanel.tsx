@@ -1,8 +1,10 @@
 /**
  * AreaChartPanel - Generic area chart component
  * Pure presentational component with no store access.
+ * Memoized to prevent unnecessary re-renders.
  */
 
+import { memo } from "react";
 import {
   AreaChart,
   Area,
@@ -30,8 +32,9 @@ interface AreaChartPanelProps {
 
 /**
  * A responsive area chart with gradient fill.
+ * Memoized to only re-render when data or configuration changes.
  */
-export function AreaChartPanel({
+export const AreaChartPanel = memo(function AreaChartPanel({
   data,
   xKey,
   yKey,
@@ -65,9 +68,10 @@ export function AreaChartPanel({
             stroke={areaColor}
             strokeWidth={2}
             fill={`url(#${gradientId})`}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   );
-}
+});

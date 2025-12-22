@@ -23,7 +23,7 @@ export const DEFAULT_TEST_CONFIG: TestConfigState = {
   numRequests: 100,
   concurrency: 50,
   useHttp2: false,
-  headers: [],
+  headers: "", // Headers as textarea text
   followRedirects: true,
   timeoutSecs: 20, // 0 means infinite
   rateLimit: 0, // 0 means no rate limit
@@ -33,6 +33,7 @@ export const DEFAULT_TEST_CONFIG: TestConfigState = {
   disableKeepAlive: false, // Keep connections alive by default for better performance
   workerThreads: 0, // 0 means use all available CPU cores
   proxyUrl: "", // Empty means no proxy
+  body: "", // Empty means no body
 };
 
 /** Default layout settings */

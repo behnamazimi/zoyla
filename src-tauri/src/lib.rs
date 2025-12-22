@@ -1,31 +1,41 @@
+use bytes::Bytes;
+use futures::stream::{self, StreamExt};
+use rand::seq::SliceRandom;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::error::Error as StdError;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
-use tokio::sync::mpsc;
-use once_cell::sync::Lazy;
 use thiserror::Error;
-use rand::seq::SliceRandom;
-use rand::Rng;
+use tokio::sync::mpsc;
 
-// Global cancellation flag and test generation counter
-static CANCEL_FLAG: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(false)));
+// Global cancellation flag - no Arc needed for static lifetime
+static CANCEL_FLAG: AtomicBool = AtomicBool::new(false);
 /// Generation counter to scope cancellation per-test run (prevents cross-test interference)
 static TEST_GENERATION: AtomicU64 = AtomicU64::new(0);
 
 // Progress throttling - stores last emission time as millis since UNIX_EPOCH
 static LAST_PROGRESS_MS: AtomicU64 = AtomicU64::new(0);
-const PROGRESS_THROTTLE_MS: u64 = 50; // ~20 updates per second
+const PROGRESS_THROTTLE_MS: u64 = 100; // ~10 updates per second (frontend further throttles to 5Hz)
+
+/// Poll interval for cancellation checks in async operations
+const CANCEL_POLL_MS: u64 = 50;
 
 // Chart calculation constants
 const THROUGHPUT_BUCKETS: usize = 30;
 const THROUGHPUT_MIN_BUCKETS: usize = 5;
 const HISTOGRAM_BUCKETS: usize = 10;
-const LATENCY_SAMPLE_TARGET: usize = 100;
-const CONCURRENCY_SAMPLE_TARGET: usize = 80;
-const CONCURRENCY_MIN_SAMPLES: usize = 10;
+const LATENCY_SAMPLE_TARGET: usize = 400;
+const CONCURRENCY_SAMPLE_TARGET: usize = 200;
+const CONCURRENCY_MIN_SAMPLES: usize = 20;
+const TIMELINE_SAMPLE_TARGET: usize = 500;
+const ERROR_LOGS_MAX: usize = 1000;
+
+/// Default capacity for status code HashMap (typical tests have 1-5 unique codes)
+const STATUS_MAP_CAPACITY: usize = 8;
 
 // User-Agent pool for randomization
 static USER_AGENTS: &[&str] = &[
@@ -88,8 +98,9 @@ impl Serialize for LoadTestError {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub enum HttpMethod {
+    #[default]
     GET,
     POST,
     PUT,
@@ -99,7 +110,7 @@ pub enum HttpMethod {
     OPTIONS,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CustomHeader {
     pub key: String,
     pub value: String,
@@ -136,6 +147,12 @@ pub struct LoadTestConfig {
     /// HTTP proxy address in format "host:port" or "http://host:port". Empty string means no proxy.
     #[serde(default)]
     pub proxy_url: String,
+    /// Request body payload (optional, used for POST, PUT, PATCH methods). Empty string means no body.
+    #[serde(default)]
+    pub body: Option<String>,
+    /// Content-Type header value (optional, auto-detected from body by frontend).
+    #[serde(default)]
+    pub payload_content_type: Option<String>,
 }
 
 fn default_true() -> bool {
@@ -185,7 +202,7 @@ pub struct HistogramBucket {
     pub count: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct LatencyPercentiles {
     pub p10: f64,
     pub p25: f64,
@@ -282,6 +299,7 @@ fn calculate_percentile(sorted_times: &[f64], percentile: f64) -> f64 {
 }
 
 /// Builds a histogram of response times with the specified number of buckets.
+#[inline]
 #[must_use]
 fn build_histogram(times: &[f64], min: f64, max: f64, buckets: usize) -> Vec<HistogramBucket> {
     if times.is_empty() || buckets == 0 {
@@ -313,9 +331,14 @@ fn build_histogram(times: &[f64], min: f64, max: f64, buckets: usize) -> Vec<His
 }
 
 /// Calculates throughput over time by bucketing results into time intervals.
-/// Optimized to O(n) by pre-sorting and using running counters instead of O(n*buckets).
+/// Optimized to O(n) by using pre-sorted indices instead of O(n*buckets).
+/// Accepts pre-sorted indices to avoid redundant sorting.
 #[must_use]
-fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f64) -> Vec<ThroughputDataPoint> {
+fn calculate_throughput_over_time(
+    results: &[RequestResult],
+    total_time_secs: f64,
+    sorted_by_timestamp: &[usize],
+) -> Vec<ThroughputDataPoint> {
     if results.is_empty() || total_time_secs <= 0.0 {
         return vec![];
     }
@@ -323,10 +346,6 @@ fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f6
     // Create time buckets (aim for ~20-50 data points)
     let num_buckets = THROUGHPUT_BUCKETS.min((total_time_secs * 10.0) as usize).max(THROUGHPUT_MIN_BUCKETS);
     let bucket_duration = total_time_secs / num_buckets as f64;
-    
-    // Pre-sort results by timestamp for O(n) processing
-    let mut sorted_timestamps: Vec<f64> = results.iter().map(|r| r.timestamp_ms / 1000.0).collect();
-    sorted_timestamps.sort_by(|a, b| a.total_cmp(b));
     
     let mut throughput_data: Vec<ThroughputDataPoint> = Vec::with_capacity(num_buckets);
     let mut result_index = 0;
@@ -337,9 +356,13 @@ fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f6
         let bucket_end = (i + 1) as f64 * bucket_duration;
         let mut requests_in_bucket: u32 = 0;
         
-        // Count requests in this bucket using the sorted order
-        while result_index < sorted_timestamps.len() && sorted_timestamps[result_index] < bucket_end {
-            if sorted_timestamps[result_index] >= bucket_start {
+        // Count requests in this bucket using the pre-sorted order
+        while result_index < sorted_by_timestamp.len() {
+            let timestamp_secs = results[sorted_by_timestamp[result_index]].timestamp_ms / 1000.0;
+            if timestamp_secs >= bucket_end {
+                break;
+            }
+            if timestamp_secs >= bucket_start {
                 requests_in_bucket += 1;
             }
             cumulative += 1;
@@ -364,26 +387,30 @@ fn calculate_throughput_over_time(results: &[RequestResult], total_time_secs: f6
 }
 
 /// Calculates latency data points over time, sampling for chart display.
+/// Accepts pre-sorted indices to avoid redundant sorting.
 #[must_use]
-fn calculate_latency_over_time(results: &[RequestResult]) -> Vec<LatencyDataPoint> {
+fn calculate_latency_over_time(
+    results: &[RequestResult],
+    sorted_by_timestamp: &[usize],
+) -> Vec<LatencyDataPoint> {
     if results.is_empty() {
         return vec![];
     }
     
-    // Sort results by timestamp using total_cmp for stable NaN handling
-    let mut sorted_results: Vec<_> = results.iter().collect();
-    sorted_results.sort_by(|a, b| a.timestamp_ms.total_cmp(&b.timestamp_ms));
+    let sample_rate = (sorted_by_timestamp.len() / LATENCY_SAMPLE_TARGET).max(1);
+    let total = sorted_by_timestamp.len();
     
-    let sample_rate = (sorted_results.len() / LATENCY_SAMPLE_TARGET).max(1);
-    
-    sorted_results
+    sorted_by_timestamp
         .iter()
         .enumerate()
-        .filter(|(i, _)| i % sample_rate == 0 || *i == sorted_results.len() - 1)
-        .map(|(i, r)| LatencyDataPoint {
-            request_num: i as u32 + 1,
-            latency_ms: r.duration_ms,
-            timestamp_ms: r.timestamp_ms,
+        .filter(|(i, _)| i % sample_rate == 0 || *i == total - 1)
+        .map(|(i, &idx)| {
+            let r = &results[idx];
+            LatencyDataPoint {
+                request_num: i as u32 + 1,
+                latency_ms: r.duration_ms,
+                timestamp_ms: r.timestamp_ms,
+            }
         })
         .collect()
 }
@@ -458,27 +485,34 @@ fn calculate_concurrency_over_time(results: &[RequestResult], total_time_secs: f
 
 /// Calculate request timeline: elapsed time vs request index.
 /// Each request is plotted at its start time with its sequential index.
+/// Samples data to TIMELINE_SAMPLE_TARGET points for performance with large datasets.
 #[must_use]
 fn calculate_request_timeline(results: &[RequestResult]) -> Vec<RequestTimelinePoint> {
     if results.is_empty() {
         return vec![];
     }
     
-    // Sort results by start time (timestamp - duration) to get chronological order
-    // Use total_cmp for stable NaN handling and add bounds check for negative values
-    let mut sorted_results: Vec<_> = results.iter().collect();
-    sorted_results.sort_by(|a, b| {
-        let a_start = (a.timestamp_ms - a.duration_ms).max(0.0);
-        let b_start = (b.timestamp_ms - b.duration_ms).max(0.0);
-        a_start.total_cmp(&b_start)
-    });
-    
-    // Create timeline points: (start_time_secs, request_index)
-    sorted_results
+    // Pre-compute start times once (O(n)) instead of calculating in comparator (O(n log n) * 2)
+    let mut start_times: Vec<(usize, f64)> = results
         .iter()
         .enumerate()
-        .map(|(index, result)| {
-            let start_time_ms = (result.timestamp_ms - result.duration_ms).max(0.0);
+        .map(|(i, r)| (i, (r.timestamp_ms - r.duration_ms).max(0.0)))
+        .collect();
+    
+    // Sort by pre-computed start time
+    start_times.sort_by(|a, b| a.1.total_cmp(&b.1));
+    
+    // Sample the results to avoid overwhelming the UI with too many points
+    let sample_rate = (start_times.len() / TIMELINE_SAMPLE_TARGET).max(1);
+    let total_results = start_times.len();
+    
+    // Create timeline points: (start_time_secs, request_index)
+    // Always include first and last points for accurate range display
+    start_times
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| *i % sample_rate == 0 || *i == total_results - 1)
+        .map(|(index, (_, start_time_ms))| {
             RequestTimelinePoint {
                 time_secs: start_time_ms / 1000.0,
                 request_index: (index + 1) as u32,
@@ -505,26 +539,62 @@ fn should_emit_progress() -> bool {
     }
 }
 
-/// Context for making requests - groups related parameters to reduce function argument count
-struct RequestContext {
-    client: reqwest::Client,
+/// Immutable configuration for a test run
+struct TestConfig {
     url: Arc<str>,
     method: HttpMethod,
     headers: Arc<[CustomHeader]>,
-    completed: Arc<AtomicU32>,
-    successful: Arc<AtomicU32>,
-    failed: Arc<AtomicU32>,
-    app_handle: AppHandle,
-    total: u32,
-    start_time: Instant,
-    cancel_flag: Arc<AtomicBool>,
-    /// Test generation when this context was created (for scoped cancellation)
-    test_generation: u64,
     /// Minimum interval between requests per worker (for rate limiting)
     rate_limit_interval: Option<Duration>,
     randomize_user_agent: bool,
     randomize_headers: bool,
     add_cache_buster: bool,
+    /// Request body payload (optional, used for POST, PUT, PATCH methods)
+    /// Uses Bytes for cheap cloning (Arc internally)
+    body: Option<Bytes>,
+    /// Content-Type header value (detected by frontend)
+    payload_content_type: Option<String>,
+    /// Whether to disable keep-alive (add Connection: close header)
+    disable_keep_alive: bool,
+}
+
+/// Shared mutable counters for progress tracking
+struct TestCounters {
+    completed: AtomicU32,
+    successful: AtomicU32,
+    failed: AtomicU32,
+    /// Connection errors specifically (for adaptive pooling)
+    connection_errors: AtomicU32,
+}
+
+impl TestCounters {
+    fn new() -> Self {
+        Self {
+            completed: AtomicU32::new(0),
+            successful: AtomicU32::new(0),
+            failed: AtomicU32::new(0),
+            connection_errors: AtomicU32::new(0),
+        }
+    }
+}
+
+/// Threshold for connection errors before switching to fresh connections
+/// If more than 5% of completed requests have connection errors, force fresh connections
+const CONNECTION_ERROR_THRESHOLD_PERCENT: u32 = 5;
+/// Minimum requests before adaptive behavior kicks in
+const MIN_REQUESTS_FOR_ADAPTIVE: u32 = 50;
+
+/// Context for making requests - groups related parameters
+struct RequestContext {
+    client: reqwest::Client,
+    config: Arc<TestConfig>,
+    counters: Arc<TestCounters>,
+    app_handle: AppHandle,
+    total: u32,
+    start_time: Instant,
+    cancel_flag: &'static AtomicBool,
+    /// Test generation when this context was created (for scoped cancellation)
+    test_generation: u64,
 }
 
 /// Check if the current test should be cancelled.
@@ -535,22 +605,37 @@ fn is_cancelled(cancel_flag: &AtomicBool, expected_generation: u64) -> bool {
     cancel_flag.load(Ordering::SeqCst) && TEST_GENERATION.load(Ordering::SeqCst) == expected_generation
 }
 
-#[allow(clippy::too_many_arguments)]
+/// Macro to check cancellation and return early if cancelled.
+/// Reduces boilerplate for the common cancellation check pattern.
+macro_rules! check_cancelled {
+    // Return None (for Option-returning functions)
+    ($ctx:expr) => {
+        if is_cancelled($ctx.cancel_flag, $ctx.test_generation) {
+            return None;
+        }
+    };
+    // Return unit with optional cleanup (for async closures)
+    ($ctx:expr, return) => {
+        if is_cancelled($ctx.cancel_flag, $ctx.test_generation) {
+            return;
+        }
+    };
+}
+
 async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<RequestResult>) -> Option<()> {
     // Check if cancelled before starting (scoped to this test's generation)
-    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
-        return None;
-    }
+    check_cancelled!(ctx);
 
     let request_start = Instant::now();
     
     // Build URL and request with randomization in a non-async block
     // This ensures the RNG doesn't live across await points
+    let config = &ctx.config;
     let request = {
         let mut rng = rand::thread_rng();
         
         // Build URL with optional cache buster
-        let url = if ctx.add_cache_buster {
+        let url = if config.add_cache_buster {
             let timestamp = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_nanos())
@@ -558,16 +643,16 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
             let random_suffix: u32 = rng.gen();
             let cache_buster = format!("_cb={}_{}", timestamp, random_suffix);
             
-            if ctx.url.contains('?') {
-                format!("{}&{}", ctx.url, cache_buster)
+            if config.url.contains('?') {
+                format!("{}&{}", config.url, cache_buster)
             } else {
-                format!("{}?{}", ctx.url, cache_buster)
+                format!("{}?{}", config.url, cache_buster)
             }
         } else {
-            ctx.url.to_string()
+            config.url.to_string()
         };
         
-        let mut request = match &ctx.method {
+        let mut request = match &config.method {
             HttpMethod::GET => ctx.client.get(&url),
             HttpMethod::POST => ctx.client.post(&url),
             HttpMethod::PUT => ctx.client.put(&url),
@@ -577,15 +662,36 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
             HttpMethod::OPTIONS => ctx.client.request(reqwest::Method::OPTIONS, &url),
         };
         
+        // Check if we should force fresh connections (adaptive behavior)
+        // If connection error rate exceeds threshold, stop using pooled connections
+        let force_fresh_connection = {
+            let completed = ctx.counters.completed.load(Ordering::Relaxed);
+            let conn_errors = ctx.counters.connection_errors.load(Ordering::Relaxed);
+            
+            // Only activate adaptive behavior after minimum requests
+            if completed >= MIN_REQUESTS_FOR_ADAPTIVE && conn_errors > 0 {
+                let error_percent = (conn_errors * 100) / completed.max(1);
+                error_percent >= CONNECTION_ERROR_THRESHOLD_PERCENT
+            } else {
+                false
+            }
+        };
+        
+        // Add Connection: close header when keep-alive is disabled OR when adaptive behavior kicks in
+        // This tells the server not to keep the connection open after the response
+        if config.disable_keep_alive || force_fresh_connection {
+            request = request.header("Connection", "close");
+        }
+        
         // Add randomized User-Agent
-        if ctx.randomize_user_agent {
+        if config.randomize_user_agent {
             if let Some(user_agent) = USER_AGENTS.choose(&mut rng) {
                 request = request.header("User-Agent", *user_agent);
             }
         }
         
         // Add randomized headers for browser-like behavior
-        if ctx.randomize_headers {
+        if config.randomize_headers {
             // Randomize Accept-Language
             if let Some(accept_lang) = ACCEPT_LANGUAGES.choose(&mut rng) {
                 request = request.header("Accept-Language", *accept_lang);
@@ -613,27 +719,44 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         }
         
         // Add custom headers (these override randomized ones if same key)
-        for header in ctx.headers.iter() {
+        // Check if Content-Type is already set by user
+        let mut has_content_type = false;
+        for header in config.headers.iter() {
             if !header.key.is_empty() {
+                if header.key.eq_ignore_ascii_case("Content-Type") {
+                    has_content_type = true;
+                }
                 request = request.header(&header.key, &header.value);
+            }
+        }
+        
+        // Add body for POST, PUT, PATCH methods
+        // Bytes clone is cheap (Arc internally) - no string allocation per request
+        if let Some(body) = &config.body {
+            if !body.is_empty() {
+                // Use content type from frontend (auto-detected) if not already set by user
+                if !has_content_type {
+                    if let Some(content_type) = &config.payload_content_type {
+                        request = request.header("Content-Type", content_type);
+                    }
+                }
+                request = request.body(body.clone());
             }
         }
         
         request
     }; // rng is dropped here, before any await
     
-    // Check if cancelled before sending (scoped to this test's generation)
-    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
-        return None;
-    }
+    // Check if cancelled before sending
+    check_cancelled!(ctx);
     
     // Create a cancellation check future that polls periodically (scoped to test generation)
-    let cancel_flag_clone = Arc::clone(&ctx.cancel_flag);
+    let cancel_flag_ref = ctx.cancel_flag;
     let test_generation = ctx.test_generation;
     let cancel_check = async move {
         loop {
-            tokio::time::sleep(Duration::from_millis(50)).await;
-            if is_cancelled(&cancel_flag_clone, test_generation) {
+            tokio::time::sleep(Duration::from_millis(CANCEL_POLL_MS)).await;
+            if is_cancelled(cancel_flag_ref, test_generation) {
                 return;
             }
         }
@@ -644,10 +767,8 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         response = request.send() => {
             match response {
                 Ok(response) => {
-                    // Check cancellation before reading body (scoped to test generation)
-                    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
-                        return None;
-                    }
+                    // Check cancellation before reading body
+                    check_cancelled!(ctx);
                     let status = response.status().as_u16();
                     let success = response.status().is_success();
                     // Consume body to ensure connection can be reused
@@ -675,7 +796,15 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
                     let duration = request_start.elapsed();
                     let timestamp = ctx.start_time.elapsed();
                     
-                    // Classify the error type
+                    // Classify the error type with resource exhaustion detection
+                    let err_str = e.to_string().to_lowercase();
+                    
+                    // Track connection errors for adaptive pooling behavior
+                    // Both is_connect() and the stale connection case (is_connect + is_request) are tracked
+                    if e.is_connect() {
+                        ctx.counters.connection_errors.fetch_add(1, Ordering::Relaxed);
+                    }
+                    
                     let error_type = if e.is_timeout() {
                         ErrorType::Timeout
                     } else if e.is_connect() {
@@ -688,10 +817,44 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
                         ErrorType::Other
                     };
                     
-                    // Create a more descriptive error message
+                    // Build full error string including source chain for pattern matching
+                    let full_err_str = {
+                        let mut parts = vec![err_str.clone()];
+                        let mut source = e.source();
+                        while let Some(src) = source {
+                            parts.push(src.to_string().to_lowercase());
+                            source = src.source();
+                        }
+                        parts.join(" ")
+                    };
+                    
+                    // Create error message
                     let error_msg = match error_type {
-                        ErrorType::Timeout => format!("Timeout after {:.1}ms - server did not respond in time", duration.as_secs_f64() * 1000.0),
-                        ErrorType::Connection => format!("Connection failed: {}", e),
+                        ErrorType::Timeout => format!("Timeout after {}ms", duration.as_millis()),
+                        ErrorType::Connection => {
+                            // Simpler error messages for common connection errors
+                            // Check full error chain for patterns
+                            if full_err_str.contains("dns") || full_err_str.contains("resolve") {
+                                format!("DNS resolution failed: {}", e)
+                            } else if full_err_str.contains("refused") {
+                                "Connection refused by server".to_string()
+                            } else if full_err_str.contains("reset") {
+                                "Connection reset by server".to_string()
+                            } else if full_err_str.contains("too many open files") || full_err_str.contains("emfile") {
+                                "Too many open connections (reduce concurrency)".to_string()
+                            } else if full_err_str.contains("closed") || full_err_str.contains("broken pipe") {
+                                // Different message based on whether connection pooling is enabled
+                                if ctx.config.disable_keep_alive {
+                                    // No pool = server is closing connections (likely overloaded)
+                                    "Connection closed by server (server may be overloaded)".to_string()
+                                } else {
+                                    // Pool enabled = likely a stale connection from the pool
+                                    "Connection closed (stale connection from pool)".to_string()
+                                }
+                            } else {
+                                format!("Connection failed: {}", e)
+                            }
+                        }
                         ErrorType::Request => format!("Request error: {}", e),
                         ErrorType::Redirect => format!("Redirect error: {}", e),
                         _ => e.to_string(),
@@ -714,17 +877,16 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         }
     };
     
-    // Check if cancelled after request (scoped to test generation)
-    if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
-        return None;
-    }
+    // Check if cancelled after request
+    check_cancelled!(ctx);
 
-    // Update counters
-    let new_completed = ctx.completed.fetch_add(1, Ordering::SeqCst) + 1;
+    // Update counters (Relaxed ordering is sufficient for counters - no synchronization needed)
+    let counters = &ctx.counters;
+    let new_completed = counters.completed.fetch_add(1, Ordering::Relaxed) + 1;
     if result.success {
-        ctx.successful.fetch_add(1, Ordering::SeqCst);
+        counters.successful.fetch_add(1, Ordering::Relaxed);
     } else {
-        ctx.failed.fetch_add(1, Ordering::SeqCst);
+        counters.failed.fetch_add(1, Ordering::Relaxed);
     }
     
     let duration_ms = result.duration_ms;
@@ -740,8 +902,8 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
         let progress = ProgressUpdate {
             completed: new_completed,
             total: ctx.total,
-            successful: ctx.successful.load(Ordering::SeqCst),
-            failed: ctx.failed.load(Ordering::SeqCst),
+            successful: counters.successful.load(Ordering::Relaxed),
+            failed: counters.failed.load(Ordering::Relaxed),
             current_rps,
             elapsed_secs: elapsed,
             latest_response_time_ms: duration_ms,
@@ -798,7 +960,7 @@ async fn run_load_test(app_handle: AppHandle, config: LoadTestConfig) -> Result<
     
     // Increment test generation to invalidate any previous test's cancellation state
     // This prevents lingering async tasks from a cancelled test from affecting new tests
-    let _new_generation = TEST_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    let current_generation = TEST_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     
     // Reset cancellation flag and progress throttle at start
     CANCEL_FLAG.store(false, Ordering::SeqCst);
@@ -814,7 +976,7 @@ async fn run_load_test(app_handle: AppHandle, config: LoadTestConfig) -> Result<
                 .build()
                 .map_err(|e| LoadTestError::Internal(format!("Failed to create runtime: {}", e)))?;
             
-            rt.block_on(run_load_test_inner(app_handle_clone, config))
+            rt.block_on(run_load_test_inner(app_handle_clone, config, current_generation))
         })
         .await
         .map_err(|e| LoadTestError::Internal(format!("Task join error: {}", e)))?;
@@ -823,51 +985,58 @@ async fn run_load_test(app_handle: AppHandle, config: LoadTestConfig) -> Result<
     }
     
     // Use default runtime
-    run_load_test_inner(app_handle, config).await
+    run_load_test_inner(app_handle, config, current_generation).await
 }
 
-async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> Result<LoadTestStats, LoadTestError> {
-    
-    // Concurrency control - default to num_requests if concurrency is 0 or greater than num_requests
-    let concurrency = if config.concurrency == 0 || config.concurrency > config.num_requests {
-        config.num_requests
-    } else {
-        config.concurrency
-    };
-    
-    // Build HTTP client
-    let mut client_builder = reqwest::Client::builder()
-        .tcp_nodelay(true);
+/// Builds an HTTP client with the specified configuration
+fn build_http_client(config: &LoadTestConfig, concurrency: u32) -> Result<reqwest::Client, LoadTestError> {
+    let mut builder = reqwest::Client::builder()
+        .tcp_nodelay(true)
+        // TCP keep-alive to prevent connections from being silently closed by routers/firewalls
+        // This is different from HTTP keep-alive - it sends TCP-level probes to keep connections alive
+        .tcp_keepalive(Duration::from_secs(15))
+        // Connection timeout - time to establish TCP connection (separate from request timeout)
+        .connect_timeout(Duration::from_secs(30));
     
     // Configure connection pooling (disabled if keep-alive is off)
     if config.disable_keep_alive {
         // Disable connection pooling entirely - each request gets a fresh connection
-        client_builder = client_builder
-            .pool_max_idle_per_host(0)
-            .pool_idle_timeout(Duration::from_millis(1))
-            .connection_verbose(true);
+        // pool_max_idle_per_host(0) ensures connections are not reused after going idle
+        builder = builder.pool_max_idle_per_host(0);
+        // Force HTTP/1.1 when keep-alive is disabled to support Connection: close header
+        // (HTTP/2 handles connection management differently and doesn't use Connection header)
+        if !config.use_http2 {
+            builder = builder.http1_only();
+        }
     } else {
         // Enable connection pooling for better performance
-        client_builder = client_builder
-            .pool_max_idle_per_host(concurrency as usize)
-            .pool_idle_timeout(Duration::from_secs(90));
+        // Pool size should match concurrency to avoid connection contention
+        // Cap at reasonable limit to prevent resource exhaustion
+        let pool_size = concurrency.min(500) as usize;
+        builder = builder
+            .pool_max_idle_per_host(pool_size)
+            // Very short idle timeout (100ms) to proactively close connections
+            // before servers close them (avoiding stale connection errors)
+            // If a connection isn't reused within 100ms, we close it ourselves
+            .pool_idle_timeout(Duration::from_millis(100));
     }
     
     // Configure request timeout (0 = infinite)
     if config.timeout_secs > 0.0 {
-        client_builder = client_builder.timeout(Duration::from_secs_f64(config.timeout_secs));
+        builder = builder.timeout(Duration::from_secs_f64(config.timeout_secs));
     }
     
-    // Configure HTTP version
+    // Configure HTTP version (only if not already set by keep-alive logic)
     if config.use_http2 {
-        client_builder = client_builder.http2_prior_knowledge();
-    } else {
-        client_builder = client_builder.http1_only();
+        builder = builder.http2_prior_knowledge();
+    } else if !config.disable_keep_alive {
+        // Only set http1_only if we haven't already set it for keep-alive
+        builder = builder.http1_only();
     }
     
     // Configure redirect policy
     if !config.follow_redirects {
-        client_builder = client_builder.redirect(reqwest::redirect::Policy::none());
+        builder = builder.redirect(reqwest::redirect::Policy::none());
     }
     
     // Configure HTTP proxy
@@ -880,31 +1049,34 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         
         let proxy = reqwest::Proxy::all(&proxy_url)
             .map_err(|e| LoadTestError::InvalidConfig(format!("Invalid proxy URL '{}': {}", proxy_url, e)))?;
-        client_builder = client_builder.proxy(proxy);
+        builder = builder.proxy(proxy);
     }
     
-    let client = client_builder.build()?;
+    builder.build().map_err(LoadTestError::from)
+}
+
+async fn run_load_test_inner(
+    app_handle: AppHandle,
+    config: LoadTestConfig,
+    current_generation: u64,
+) -> Result<LoadTestStats, LoadTestError> {
+    // Concurrency control - default to num_requests if concurrency is 0 or greater than num_requests
+    let concurrency = if config.concurrency == 0 || config.concurrency > config.num_requests {
+        config.num_requests
+    } else {
+        config.concurrency
+    };
+    
+    // Build HTTP client
+    let client = build_http_client(&config, concurrency)?;
 
     let start = Instant::now();
-    let cancel_flag = Arc::clone(&CANCEL_FLAG);
-    
-    let semaphore = Arc::new(tokio::sync::Semaphore::new(concurrency as usize));
-    
-    // Shared state for progress tracking
-    let completed = Arc::new(AtomicU32::new(0));
-    let successful = Arc::new(AtomicU32::new(0));
-    let failed = Arc::new(AtomicU32::new(0));
     
     // Use channel for result collection to reduce mutex contention
     let (result_tx, mut result_rx) = mpsc::unbounded_channel::<RequestResult>();
     
     // Pre-allocate results vector
     let results_capacity = config.num_requests as usize;
-    
-    // Use Arc for shared immutable data to avoid cloning per request
-    let url: Arc<str> = config.url.into();
-    let headers: Arc<[CustomHeader]> = config.headers.into();
-    let method = config.method;
     let num_requests = config.num_requests;
     
     // Calculate rate limit interval (if rate_limit > 0, interval = 1/rate_limit seconds)
@@ -914,100 +1086,82 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         None
     };
     
-    // Create shared request context (without the sender to allow proper channel closing)
-    // Capture the current test generation for scoped cancellation
-    let current_generation = TEST_GENERATION.load(Ordering::SeqCst);
+    // Convert body to Bytes for cheap cloning (Arc internally)
+    let body_bytes = config.body.map(Bytes::from);
     
-    let base_ctx = Arc::new(RequestContext {
-        client,
-        url,
-        method,
-        headers,
-        completed,
-        successful,
-        failed,
-        app_handle,
-        total: num_requests,
-        start_time: start,
-        cancel_flag,
-        test_generation: current_generation,
+    // Create test config with immutable settings
+    let test_config = Arc::new(TestConfig {
+        url: config.url.into(),
+        method: config.method,
+        headers: config.headers.into(),
         rate_limit_interval,
         randomize_user_agent: config.randomize_user_agent,
         randomize_headers: config.randomize_headers,
         add_cache_buster: config.add_cache_buster,
+        body: body_bytes,
+        payload_content_type: config.payload_content_type,
+        disable_keep_alive: config.disable_keep_alive,
     });
     
-    // Create all request futures with semaphore for concurrency control
-    let futures: Vec<_> = (0..num_requests)
-        .map(|_| {
-            let sem = Arc::clone(&semaphore);
-            let ctx = Arc::clone(&base_ctx);
-            let tx = result_tx.clone();
-            
-            async move {
-                // Check cancellation before waiting for semaphore (scoped to test generation)
-                if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
-                    return;
-                }
+    // Create shared counters
+    let counters = Arc::new(TestCounters::new());
+    
+    // Create shared request context using the generation passed from run_load_test
+    let base_ctx = Arc::new(RequestContext {
+        client,
+        config: test_config,
+        counters,
+        app_handle,
+        total: num_requests,
+        start_time: start,
+        cancel_flag: &CANCEL_FLAG,
+        test_generation: current_generation,
+    });
+    
+    // Use buffer_unordered to control concurrency efficiently
+    // This only creates `concurrency` futures at a time, avoiding the memory pressure
+    // of creating all futures upfront with join_all + semaphore
+    {
+        // Scope the sender so it's dropped when the stream completes
+        let request_stream = stream::iter(0..num_requests)
+            .map(|_| {
+                let ctx = Arc::clone(&base_ctx);
+                let tx = result_tx.clone();
                 
-                // Race between semaphore acquisition and cancellation
-                let permit = loop {
-                    tokio::select! {
-                        biased; // Prefer checking semaphore first
-                        permit = sem.acquire() => {
-                            match permit {
-                                Ok(p) => break p,
-                                Err(_) => return,
-                            }
-                        }
-                        _ = tokio::time::sleep(Duration::from_millis(50)) => {
-                            if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
+                async move {
+                    // Check cancellation before starting
+                    if is_cancelled(ctx.cancel_flag, ctx.test_generation) {
+                        return;
+                    }
+                    
+                    // Apply rate limiting delay if configured
+                    if let Some(interval) = ctx.config.rate_limit_interval {
+                        // Simple cancellation check during rate limit - no complex select! loop needed
+                        tokio::select! {
+                            biased;
+                            _ = tokio::time::sleep(interval) => {}
+                            _ = async {
+                                while !is_cancelled(ctx.cancel_flag, ctx.test_generation) {
+                                    tokio::time::sleep(Duration::from_millis(CANCEL_POLL_MS)).await;
+                                }
+                            } => {
                                 return;
                             }
                         }
                     }
-                };
-                
-                // Check cancellation after acquiring permit (scoped to test generation)
-                if is_cancelled(&ctx.cancel_flag, ctx.test_generation) {
-                    drop(permit);
-                    return;
+                    
+                    let _ = make_request(&ctx, &tx).await;
                 }
-                
-                // Apply rate limiting delay if configured
-                if let Some(interval) = ctx.rate_limit_interval {
-                    // Check cancellation during rate limit wait (scoped to test generation)
-                    let cancel_flag = Arc::clone(&ctx.cancel_flag);
-                    let gen = ctx.test_generation;
-                    tokio::select! {
-                        _ = tokio::time::sleep(interval) => {}
-                        _ = async {
-                            loop {
-                                tokio::time::sleep(Duration::from_millis(50)).await;
-                                if is_cancelled(&cancel_flag, gen) {
-                                    return;
-                                }
-                            }
-                        } => {
-                            drop(permit);
-                            return;
-                        }
-                    }
-                }
-                
-                let _ = make_request(&ctx, &tx).await;
-                
-                drop(permit);
-                // tx is dropped here when the future completes
-            }
-        })
-        .collect();
-    
-    // Drop the original sender so the channel closes when all futures complete
-    drop(result_tx);
-    
-    // Execute all requests with controlled concurrency
-    futures::future::join_all(futures).await;
+            })
+            .buffer_unordered(concurrency as usize);
+        
+        // Execute all requests with controlled concurrency
+        // buffer_unordered ensures only `concurrency` futures run at a time
+        request_stream.for_each(|_| async {}).await;
+        
+        // Drop the original sender so channel closes when stream completes
+        drop(result_tx);
+    }
     
     let total_time = start.elapsed();
     let total_time_secs = total_time.as_secs_f64();
@@ -1018,14 +1172,20 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         results.push(result);
     }
     
-    // Calculate statistics in a single pass where possible
+    // Calculate and return statistics
+    Ok(calculate_stats(results, num_requests, total_time_secs))
+}
+
+/// Calculates all statistics from the collected request results
+fn calculate_stats(results: Vec<RequestResult>, num_requests: u32, total_time_secs: f64) -> LoadTestStats {
+    // Calculate basic stats in a single pass
     let mut successful_requests = 0u32;
     let mut failed_requests = 0u32;
     let mut sum_response_time = 0.0f64;
     let mut min_response_time = f64::INFINITY;
     let mut max_response_time = f64::NEG_INFINITY;
-    let mut status_map: HashMap<u16, u32> = HashMap::new();
-    let mut error_logs: Vec<ErrorLogEntry> = Vec::new();
+    let mut status_map: HashMap<u16, u32> = HashMap::with_capacity(STATUS_MAP_CAPACITY);
+    let mut error_logs: Vec<ErrorLogEntry> = Vec::with_capacity(ERROR_LOGS_MAX.min(results.len()));
     
     // Single pass through results for basic stats
     for result in &results {
@@ -1033,13 +1193,18 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
             successful_requests += 1;
         } else {
             failed_requests += 1;
-            error_logs.push(ErrorLogEntry {
-                timestamp_ms: result.timestamp_ms,
-                status: result.status,
-                error: result.error.clone().unwrap_or_else(|| format!("HTTP {}", result.status)),
-                error_type: result.error_type.clone(),
-                duration_ms: result.duration_ms,
-            });
+            // Only collect up to ERROR_LOGS_MAX error logs
+            if error_logs.len() < ERROR_LOGS_MAX {
+                let error_msg = result.error.clone()
+                    .unwrap_or_else(|| format!("HTTP {}", result.status));
+                error_logs.push(ErrorLogEntry {
+                    timestamp_ms: result.timestamp_ms,
+                    status: result.status,
+                    error: error_msg,
+                    error_type: result.error_type.clone(),
+                    duration_ms: result.duration_ms,
+                });
+            }
         }
         
         sum_response_time += result.duration_ms;
@@ -1063,13 +1228,10 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         0.0
     };
     
-    // Extract response times for histogram and percentiles
+    // Calculate histogram and percentiles
     let response_times: Vec<f64> = results.iter().map(|r| r.duration_ms).collect();
-    
-    // Calculate histogram
     let histogram = build_histogram(&response_times, min_response_time, max_response_time, HISTOGRAM_BUCKETS);
     
-    // Calculate percentiles using total_cmp for stable NaN handling
     let mut sorted_times = response_times;
     sorted_times.sort_by(|a, b| a.total_cmp(b));
     
@@ -1090,17 +1252,19 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         .collect();
     status_codes.sort_by(|a, b| b.count.cmp(&a.count));
     
+    // Pre-sort results by timestamp once - reused by multiple chart calculations
+    let mut sorted_by_timestamp: Vec<usize> = (0..results.len()).collect();
+    sorted_by_timestamp.sort_by(|&a, &b| {
+        results[a].timestamp_ms.total_cmp(&results[b].timestamp_ms)
+    });
+    
     // Calculate time-series data for charts
-    let throughput_over_time = calculate_throughput_over_time(&results, total_time_secs);
-    let latency_over_time = calculate_latency_over_time(&results);
-    
-    // Calculate concurrency over time
+    let throughput_over_time = calculate_throughput_over_time(&results, total_time_secs, &sorted_by_timestamp);
+    let latency_over_time = calculate_latency_over_time(&results, &sorted_by_timestamp);
     let concurrency_over_time = calculate_concurrency_over_time(&results, total_time_secs);
-    
-    // Calculate request timeline (elapsed time vs request index)
     let request_timeline = calculate_request_timeline(&results);
 
-    Ok(LoadTestStats {
+    LoadTestStats {
         total_requests: num_requests,
         successful_requests,
         failed_requests,
@@ -1118,7 +1282,7 @@ async fn run_load_test_inner(app_handle: AppHandle, config: LoadTestConfig) -> R
         error_logs,
         concurrency_over_time,
         request_timeline,
-    })
+    }
 }
 
 /// Get the number of available CPU cores on this machine

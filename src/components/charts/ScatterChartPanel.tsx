@@ -1,8 +1,10 @@
 /**
  * ScatterChartPanel - Scatter plot with optional trend line
  * Pure presentational component with no store access.
+ * Memoized to prevent unnecessary re-renders.
  */
 
+import { memo } from "react";
 import {
   ScatterChart,
   Scatter,
@@ -40,8 +42,9 @@ interface ScatterChartPanelProps {
 
 /**
  * A responsive scatter plot with optional trend line overlay.
+ * Memoized to only re-render when data or configuration changes.
  */
-export function ScatterChartPanel({
+export const ScatterChartPanel = memo(function ScatterChartPanel({
   data,
   xKey,
   yKey,
@@ -109,7 +112,13 @@ export function ScatterChartPanel({
             }
             cursor={{ strokeDasharray: "3 3" }}
           />
-          <Scatter name="Requests" data={data} fill={scatterColor} fillOpacity={0.6} />
+          <Scatter
+            name="Requests"
+            data={data}
+            fill={scatterColor}
+            fillOpacity={0.6}
+            isAnimationActive={false}
+          />
           {trendLineData && trendLineData.length > 0 && (
             <Line
               type="linear"
@@ -120,10 +129,11 @@ export function ScatterChartPanel({
               strokeDasharray="5 5"
               dot={false}
               name="Trend Line"
+              isAnimationActive={false}
             />
           )}
         </ScatterChart>
       </ResponsiveContainer>
     </div>
   );
-}
+});

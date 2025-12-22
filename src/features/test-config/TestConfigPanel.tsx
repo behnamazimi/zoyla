@@ -5,10 +5,12 @@
 
 import * as Switch from "@radix-ui/react-switch";
 import * as Select from "@radix-ui/react-select";
-import { ChevronDown, Check, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useTestConfigStore, useTestRunnerStore } from "../../store";
+import * as Popover from "@radix-ui/react-popover";
+import { ChevronDown, Check, ChevronRight, Info } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useTestConfigStore, useTestRunnerStore, useHistoryStore } from "../../store";
 import { HeadersEditor } from "./HeadersEditor";
+import { PayloadEditor } from "./PayloadEditor";
 import {
   HTTP_METHODS,
   MIN_REQUESTS,
@@ -17,6 +19,10 @@ import {
   MAX_CONCURRENCY,
 } from "../../constants/defaults";
 import { getCpuCount } from "../../services/tauri";
+import {
+  calculateConcurrencyRecommendation,
+  getConcurrencyWarnings,
+} from "../../utils/concurrency";
 import type { HttpMethod } from "../../types/api";
 import * as styles from "./test-config.css";
 
@@ -67,6 +73,34 @@ export function TestConfigPanel() {
 
   const isRunning = useTestRunnerStore((s) => s.isRunning);
 
+  // Get past success rate from history for recommendation
+  const historyEntries = useHistoryStore((s) => s.entries);
+  const pastSuccessRate = useMemo(() => {
+    // Get the most recent test for the same URL
+    const relevantEntry = historyEntries.find((e) => e.url === url);
+    if (relevantEntry && relevantEntry.stats) {
+      const total = relevantEntry.successfulRequests + relevantEntry.failedRequests;
+      return total > 0 ? (relevantEntry.successfulRequests / total) * 100 : undefined;
+    }
+    return undefined;
+  }, [historyEntries, url]);
+
+  // Calculate concurrency recommendation
+  const recommendation = useMemo(() => {
+    return calculateConcurrencyRecommendation({
+      cpuCores: cpuCount || 4,
+      useHttp2,
+      disableKeepAlive,
+      url,
+      pastSuccessRate,
+    });
+  }, [cpuCount, useHttp2, disableKeepAlive, url, pastSuccessRate]);
+
+  // Get warnings for current concurrency value
+  const concurrencyWarnings = useMemo(() => {
+    return getConcurrencyWarnings(concurrency, recommendation);
+  }, [concurrency, recommendation]);
+
   return (
     <>
       {/* Method & URL */}
@@ -114,6 +148,9 @@ export function TestConfigPanel() {
       {/* Headers */}
       <HeadersEditor />
 
+      {/* Payload */}
+      <PayloadEditor />
+
       {/* Load Configuration - Requests & Concurrency in one row with labels */}
       <div className={styles.configSection}>
         <div className={styles.loadConfigRow}>
@@ -141,6 +178,64 @@ export function TestConfigPanel() {
               className={styles.labeledNumberInput}
             />
           </div>
+        </div>
+
+        {/* Concurrency Hint */}
+        <div className={styles.concurrencyHint}>
+          <span className={styles.concurrencyHintText}>
+            Suggested: <strong>{recommendation.suggested}</strong> parallel requests
+            {concurrency !== recommendation.suggested && (
+              <button
+                type="button"
+                className={styles.concurrencyApplyBtn}
+                onClick={() => setConcurrency(recommendation.suggested)}
+                disabled={isRunning}
+              >
+                Apply
+              </button>
+            )}
+          </span>
+          <Popover.Root>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                className={styles.concurrencyInfoBtn}
+                aria-label="How is this calculated?"
+              >
+                <Info size={14} />
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content className={styles.concurrencyInfoPopover} sideOffset={5} align="end">
+                <div className={styles.concurrencyInfoTitle}>Recommendation Breakdown</div>
+                <ul className={styles.concurrencyInfoList}>
+                  {recommendation.breakdown.map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+                {concurrencyWarnings.length > 0 && (
+                  <div className={styles.concurrencyWarnings}>
+                    {concurrencyWarnings.map((warning, index) => (
+                      <div key={index} className={styles.concurrencyWarning}>
+                        ⚠️ {warning}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.concurrencyInfoFooter}>
+                  Max safe for your system: {recommendation.max}
+                </div>
+                {!disableKeepAlive && concurrency >= 200 && (
+                  <div className={styles.concurrencyInfoNote}>
+                    <strong>Note:</strong> With connection pooling enabled, servers may close idle
+                    connections causing "stale connection" errors. If you see many connection
+                    errors, try enabling <em>Disable Keep-Alive</em> in Advanced Options.
+                  </div>
+                )}
+                <Popover.Arrow className={styles.concurrencyInfoArrow} />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
         </div>
       </div>
 

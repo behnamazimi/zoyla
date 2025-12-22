@@ -1,18 +1,45 @@
 /**
  * ProgressView - Live test progress display
  * Container component connecting to testRunnerStore.
+ * Optimized for high-frequency updates during load tests.
  */
 
+import { memo } from "react";
 import { useTestRunnerStore } from "../../store";
 import { ProgressBar } from "../../components/feedback";
 import { formatMs } from "../../utils/format";
 import * as styles from "./test-runner.css";
 
 /**
- * Displays real-time progress during test execution.
+ * Individual metric tile component - memoized to prevent unnecessary re-renders.
  */
-export function ProgressView() {
-  const { isRunning, progress } = useTestRunnerStore();
+const MetricTile = memo(function MetricTile({
+  label,
+  value,
+  tileVariant,
+  valueVariant,
+}: {
+  label: string;
+  value: string | number;
+  tileVariant?: string;
+  valueVariant?: string;
+}) {
+  return (
+    <div className={`${styles.liveTile} ${tileVariant || ""}`}>
+      <span className={styles.liveTileLabel}>{label}</span>
+      <span className={`${styles.liveTileValue} ${valueVariant || ""}`}>{value}</span>
+    </div>
+  );
+});
+
+/**
+ * Displays real-time progress during test execution.
+ * Uses fine-grained selectors to minimize re-renders.
+ */
+export const ProgressView = memo(function ProgressView() {
+  // Use fine-grained selectors to only subscribe to what we need
+  const isRunning = useTestRunnerStore((s) => s.isRunning);
+  const progress = useTestRunnerStore((s) => s.progress);
 
   if (!isRunning || !progress) {
     return null;
@@ -30,39 +57,28 @@ export function ProgressView() {
       <ProgressBar value={progress.completed} max={progress.total} />
 
       <div className={styles.liveMetricsGrid}>
-        <div className={styles.liveTile}>
-          <span className={styles.liveTileLabel}>Completed</span>
-          <span className={styles.liveTileValue}>
-            {progress.completed}/{progress.total}
-          </span>
-        </div>
-        <div className={`${styles.liveTile} ${styles.liveTileVariants.accent}`}>
-          <span className={styles.liveTileLabel}>Requests/sec</span>
-          <span className={`${styles.liveTileValue} ${styles.liveTileValueVariants.highlight}`}>
-            {progress.current_rps.toFixed(1)}
-          </span>
-        </div>
-        <div className={styles.liveTile}>
-          <span className={styles.liveTileLabel}>Elapsed Time</span>
-          <span className={styles.liveTileValue}>{progress.elapsed_secs.toFixed(2)}s</span>
-        </div>
-        <div className={`${styles.liveTile} ${styles.liveTileVariants.success}`}>
-          <span className={styles.liveTileLabel}>Successful</span>
-          <span className={`${styles.liveTileValue} ${styles.liveTileValueVariants.success}`}>
-            {progress.successful}
-          </span>
-        </div>
-        <div className={`${styles.liveTile} ${styles.liveTileVariants.error}`}>
-          <span className={styles.liveTileLabel}>Failed</span>
-          <span className={`${styles.liveTileValue} ${styles.liveTileValueVariants.error}`}>
-            {progress.failed}
-          </span>
-        </div>
-        <div className={styles.liveTile}>
-          <span className={styles.liveTileLabel}>Latest Response</span>
-          <span className={styles.liveTileValue}>{formatMs(progress.latest_response_time_ms)}</span>
-        </div>
+        <MetricTile label="Completed" value={`${progress.completed}/${progress.total}`} />
+        <MetricTile
+          label="Requests/sec"
+          value={progress.current_rps.toFixed(1)}
+          tileVariant={styles.liveTileVariants.accent}
+          valueVariant={styles.liveTileValueVariants.highlight}
+        />
+        <MetricTile label="Elapsed Time" value={`${progress.elapsed_secs.toFixed(2)}s`} />
+        <MetricTile
+          label="Successful"
+          value={progress.successful}
+          tileVariant={styles.liveTileVariants.success}
+          valueVariant={styles.liveTileValueVariants.success}
+        />
+        <MetricTile
+          label="Failed"
+          value={progress.failed}
+          tileVariant={styles.liveTileVariants.error}
+          valueVariant={styles.liveTileValueVariants.error}
+        />
+        <MetricTile label="Latest Response" value={formatMs(progress.latest_response_time_ms)} />
       </div>
     </div>
   );
-}
+});

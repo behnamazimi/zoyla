@@ -3,9 +3,14 @@
  * This is the ONLY place where multiple stores interact.
  */
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTestConfigStore, useTestRunnerStore, useHistoryStore, useUIStore } from "../store";
 import { runLoadTest, cancelLoadTest, setupEventListeners } from "../services/tauri";
+import type { ProgressUpdate } from "../types/api";
+
+// Throttle progress updates to 5Hz (200ms) to reduce React re-renders
+// The backend already throttles to 20Hz, this further reduces UI updates
+const PROGRESS_THROTTLE_MS = 200;
 
 /**
  * Hook that coordinates test execution between stores and services.
@@ -19,15 +24,53 @@ export function useTestRunner() {
   const selectEntry = useHistoryStore((s) => s.selectEntry);
   const setShowErrorLogs = useUIStore((s) => s.setShowErrorLogs);
 
+  // Refs for progress throttling
+  const lastProgressUpdateRef = useRef<number>(0);
+  const pendingProgressRef = useRef<ProgressUpdate | null>(null);
+  const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Setup event listeners on mount
   useEffect(() => {
     let cleanup: (() => void) | null = null;
 
     const setup = async () => {
       cleanup = await setupEventListeners(
-        // Progress handler
+        // Progress handler with throttling
         (progress) => {
-          setProgress(progress);
+          const now = Date.now();
+          const timeSinceLastUpdate = now - lastProgressUpdateRef.current;
+
+          // Always update on completion (final progress)
+          const isComplete = progress.completed === progress.total;
+
+          if (isComplete || timeSinceLastUpdate >= PROGRESS_THROTTLE_MS) {
+            // Enough time has passed, update immediately
+            lastProgressUpdateRef.current = now;
+            setProgress(progress);
+
+            // Clear any pending throttled update
+            if (throttleTimeoutRef.current) {
+              clearTimeout(throttleTimeoutRef.current);
+              throttleTimeoutRef.current = null;
+            }
+            pendingProgressRef.current = null;
+          } else {
+            // Store the latest progress for deferred update
+            pendingProgressRef.current = progress;
+
+            // Schedule a deferred update if not already scheduled
+            if (!throttleTimeoutRef.current) {
+              const delay = PROGRESS_THROTTLE_MS - timeSinceLastUpdate;
+              throttleTimeoutRef.current = setTimeout(() => {
+                if (pendingProgressRef.current) {
+                  lastProgressUpdateRef.current = Date.now();
+                  setProgress(pendingProgressRef.current);
+                  pendingProgressRef.current = null;
+                }
+                throttleTimeoutRef.current = null;
+              }, delay);
+            }
+          }
         },
         // Cancel handler
         () => {
@@ -42,6 +85,10 @@ export function useTestRunner() {
 
     return () => {
       if (cleanup) cleanup();
+      // Clear any pending throttle timeout on unmount
+      if (throttleTimeoutRef.current) {
+        clearTimeout(throttleTimeoutRef.current);
+      }
     };
   }, [setProgress, setRunning, setError]);
 
@@ -103,6 +150,7 @@ export function useTestRunner() {
         disableKeepAlive: configState.disableKeepAlive,
         workerThreads: configState.workerThreads,
         proxyUrl: configState.proxyUrl,
+        body: configState.body,
       });
 
       // Auto-show error logs if there are failures

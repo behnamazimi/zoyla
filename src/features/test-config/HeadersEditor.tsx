@@ -4,20 +4,40 @@
  */
 
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { ChevronDown, ChevronRight, X, Plus } from "lucide-react";
-import { useTestConfigStore } from "../../store";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useTestConfigStore, useTestRunnerStore } from "../../store";
 import { useUIStore } from "../../store";
+import { validateHeaders } from "../../utils/headers";
 import * as styles from "./test-config.css";
 
 /**
  * Expandable panel for managing custom HTTP headers.
+ * Uses textarea with standard HTTP header format: "Header-Name: value"
  */
 export function HeadersEditor() {
-  const { headers, addHeader, updateHeader, removeHeader } = useTestConfigStore();
-  const isRunning = false; // Will be connected via props from parent
+  const { headers, setHeaders } = useTestConfigStore();
+  const isRunning = useTestRunnerStore((s) => s.isRunning);
   const { showHeaders, setShowHeaders } = useUIStore();
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const activeHeaderCount = headers.filter((h) => h.key.trim()).length;
+  // Validate headers on change
+  const headerValidation = useMemo(() => validateHeaders(headers), [headers]);
+  const parsedHeaders = headerValidation.parsedHeaders;
+  const activeHeaderCount = parsedHeaders.length;
+
+  // Update validation errors
+  useEffect(() => {
+    if (headers.trim() === "") {
+      setValidationErrors([]);
+      return;
+    }
+    if (!headerValidation.isValid) {
+      setValidationErrors(headerValidation.errors);
+    } else {
+      setValidationErrors([]);
+    }
+  }, [headers, headerValidation]);
 
   return (
     <Collapsible.Root
@@ -34,45 +54,27 @@ export function HeadersEditor() {
       </Collapsible.Trigger>
 
       <Collapsible.Content className={styles.headersContent}>
-        <div className={styles.headersList}>
-          {headers.map((header) => (
-            <div key={header.id} className={styles.headerRow}>
-              <input
-                type="text"
-                value={header.key}
-                onChange={(e) => updateHeader(header.id, "key", e.target.value)}
-                placeholder="Header name"
-                disabled={isRunning}
-                className={styles.headerKey}
-              />
-              <input
-                type="text"
-                value={header.value}
-                onChange={(e) => updateHeader(header.id, "value", e.target.value)}
-                placeholder="Value"
-                disabled={isRunning}
-                className={styles.headerValue}
-              />
-              <button
-                className={styles.headerRemoveBtn}
-                onClick={() => removeHeader(header.id)}
-                disabled={isRunning}
-                title="Remove header"
-              >
-                <X size={12} />
-              </button>
+        <div className={styles.payloadContainer}>
+          <textarea
+            value={headers}
+            onChange={(e) => setHeaders(e.target.value)}
+            placeholder="Content-Type: application/json&#10;Authorization: Bearer token123&#10;X-Custom-Header: value"
+            disabled={isRunning}
+            className={styles.payloadTextarea}
+            rows={4}
+            spellCheck={false}
+          />
+          {validationErrors.length > 0 && (
+            <div className={styles.jsonError}>
+              {validationErrors.map((error, index) => (
+                <div key={index}>{error}</div>
+              ))}
             </div>
-          ))}
+          )}
+          <div className={styles.payloadHint}>
+            Format: Header-Name: value (one per line). Lines starting with # are ignored.
+          </div>
         </div>
-        <button
-          type="button"
-          className={styles.addHeaderBtn}
-          onClick={addHeader}
-          disabled={isRunning}
-        >
-          <Plus size={12} />
-          <span>Add Header</span>
-        </button>
       </Collapsible.Content>
     </Collapsible.Root>
   );

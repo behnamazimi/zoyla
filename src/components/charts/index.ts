@@ -24,3 +24,6 @@ export { ScatterChartPanel } from "./ScatterChartPanel";
 
 /** Hook for theme-aware chart colors */
 export { useChartColors } from "./useChartColors";
+
+/** Info button with popover explaining chart meaning */
+export { ChartInfoButton } from "./ChartInfoButton";

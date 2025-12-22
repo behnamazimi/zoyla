@@ -35,6 +35,10 @@ export interface TestConfig {
   worker_threads: number;
   /** HTTP proxy address in format "host:port" or "http://host:port". Empty string means no proxy. */
   proxy_url: string;
+  /** Request body payload (optional, used for POST, PUT, PATCH methods). Empty string means no body. */
+  body?: string | null;
+  /** Content-Type header value (optional, auto-detected from body if not provided). */
+  payload_content_type?: string | null;
 }
 
 /** Error type classification for failed requests */
@@ -178,6 +182,8 @@ export interface HistoryEntry {
   workerThreads?: number;
   /** Proxy URL (optional for backward compatibility) */
   proxyUrl?: string;
+  /** Request body payload (optional for backward compatibility) */
+  body?: string;
   totalTimeSecs: number;
   requestsPerSecond: number;
   avgResponseMs: number;

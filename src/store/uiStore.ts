@@ -31,6 +31,7 @@ export const useUIStore = create<UIStore>()((set, get) => ({
   showHistory: false,
   showLayoutSettings: false,
   showHeaders: false,
+  showPayload: false,
   showErrorLogs: false,
   showKeyboardGuide: false,
   layoutSettings: DEFAULT_LAYOUT_SETTINGS,
@@ -52,6 +53,8 @@ export const useUIStore = create<UIStore>()((set, get) => ({
     }),
 
   setShowHeaders: (showHeaders: boolean) => set({ showHeaders }),
+
+  setShowPayload: (showPayload: boolean) => set({ showPayload }),
 
   setShowErrorLogs: (showErrorLogs: boolean) => set({ showErrorLogs }),
 

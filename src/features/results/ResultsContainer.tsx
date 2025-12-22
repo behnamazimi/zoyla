@@ -1,8 +1,10 @@
 /**
  * ResultsContainer - Orchestrates all result panels
  * Container component connecting to stores.
+ * Uses fine-grained selectors to minimize re-renders.
  */
 
+import { memo } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Download, FileJson, FileSpreadsheet, X } from "lucide-react";
 import { useTestRunnerStore, useTestConfigStore, useHistoryStore } from "../../store";
@@ -70,14 +72,21 @@ function formatTestTime(date: Date | null): string {
 
 /**
  * Main container for all test result visualizations.
+ * Memoized to prevent unnecessary re-renders when unrelated state changes.
  */
-export function ResultsContainer() {
+export const ResultsContainer = memo(function ResultsContainer() {
+  // Use fine-grained selectors to only subscribe to what we need
   const stats = useTestRunnerStore((s) => s.stats);
   const isRunning = useTestRunnerStore((s) => s.isRunning);
   const testStartTime = useTestRunnerStore((s) => s.testStartTime);
   const clearResults = useTestRunnerStore((s) => s.clearResults);
   const selectEntry = useHistoryStore((s) => s.selectEntry);
-  const { url, method, numRequests, useHttp2 } = useTestConfigStore();
+
+  // Fine-grained selectors for config values needed for export
+  const url = useTestConfigStore((s) => s.url);
+  const method = useTestConfigStore((s) => s.method);
+  const numRequests = useTestConfigStore((s) => s.numRequests);
+  const useHttp2 = useTestConfigStore((s) => s.useHttp2);
 
   if (!stats || isRunning) {
     return null;
@@ -154,4 +163,4 @@ export function ResultsContainer() {
       <ErrorLogsPanel />
     </div>
   );
-}
+});
