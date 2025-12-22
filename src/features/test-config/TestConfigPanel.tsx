@@ -157,11 +157,17 @@ export function TestConfigPanel() {
           <div className={styles.labeledInputGroup}>
             <label className={styles.configLabel}>Requests</label>
             <input
-              type="number"
-              value={numRequests}
-              onChange={(e) => setNumRequests(parseInt(e.target.value) || 0)}
-              min={MIN_REQUESTS}
-              max={MAX_REQUESTS}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={numRequests || ""}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, "");
+                setNumRequests(raw === "" ? 0 : Math.min(parseInt(raw, 10), MAX_REQUESTS));
+              }}
+              onBlur={() => {
+                if (numRequests < MIN_REQUESTS) setNumRequests(MIN_REQUESTS);
+              }}
               disabled={isRunning}
               className={styles.labeledNumberInput}
             />
@@ -169,11 +175,17 @@ export function TestConfigPanel() {
           <div className={styles.labeledInputGroup}>
             <label className={styles.configLabel}>Parallel</label>
             <input
-              type="number"
-              value={concurrency}
-              onChange={(e) => setConcurrency(parseInt(e.target.value) || 0)}
-              min={MIN_CONCURRENCY}
-              max={MAX_CONCURRENCY}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={concurrency || ""}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, "");
+                setConcurrency(raw === "" ? 0 : Math.min(parseInt(raw, 10), MAX_CONCURRENCY));
+              }}
+              onBlur={() => {
+                if (concurrency < MIN_CONCURRENCY) setConcurrency(MIN_CONCURRENCY);
+              }}
               disabled={isRunning}
               className={styles.labeledNumberInput}
             />

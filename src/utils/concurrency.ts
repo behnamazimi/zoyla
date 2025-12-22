@@ -1,6 +1,11 @@
 /**
  * Concurrency Recommendation Utility
  * Calculates optimal parallel request count based on system resources and test configuration
+ *
+ * Notes on limits:
+ * - macOS sandbox may throttle concurrent network connections
+ * - System DNS resolver (mDNSResponder) has internal concurrency limits
+ * - Very high concurrency (500+) may cause connection bursts that overwhelm targets
  */
 
 export interface ConcurrencyFactors {
@@ -26,9 +31,15 @@ export interface ConcurrencyRecommendation {
 }
 
 // Base multiplier per CPU core
-const BASE_PER_CORE = 25;
+const BASE_PER_CORE = 15;
 // Maximum safe multiplier per CPU core
-const MAX_PER_CORE = 100;
+const MAX_PER_CORE = 50;
+// Soft recommended limit for external targets (above this, show warnings)
+const EXTERNAL_RECOMMENDED_MAX = 200;
+// Higher limit for local targets (no DNS overhead, faster connections)
+const LOCAL_RECOMMENDED_MAX = 500;
+// Absolute max - hard cap based on macOS DNS resolver limits
+export const ABSOLUTE_MAX = 1000;
 
 /**
  * Checks if the URL targets localhost or local network
@@ -121,14 +132,16 @@ export function calculateConcurrencyRecommendation(
     warnings.push(`Previous tests had ${(100 - pastSuccessRate).toFixed(0)}% failure rate`);
   }
 
-  // Calculate max safe value
-  const max = cpuCores * MAX_PER_CORE;
+  // Calculate max based on target type (soft limit, not hard cap)
+  const systemMax = cpuCores * MAX_PER_CORE;
+  const recommendedMax = isLocal ? LOCAL_RECOMMENDED_MAX : EXTERNAL_RECOMMENDED_MAX;
+  const max = Math.min(systemMax, recommendedMax);
 
   // Round to nice numbers
   suggested = Math.round(suggested / 10) * 10;
   suggested = Math.max(10, Math.min(suggested, max));
 
-  breakdown.push(`Final suggestion: ${suggested}`);
+  breakdown.push(`Recommended max: ${max} (${isLocal ? "local" : "external"} target)`);
 
   return {
     suggested,
@@ -155,9 +168,11 @@ export function getConcurrencyWarnings(
   const warnings = [...recommendation.warnings];
 
   if (currentValue > recommendation.max) {
-    warnings.push(`Values above ${recommendation.max} may cause connection errors on your system`);
+    warnings.push(
+      `Values above ${recommendation.max} may cause DNS/connection errors - test incrementally`
+    );
   } else if (currentValue > recommendation.suggested * 2) {
-    warnings.push(`This is significantly higher than recommended (${recommendation.suggested})`);
+    warnings.push(`Higher than recommended (${recommendation.suggested}) - monitor for errors`);
   }
 
   if (currentValue < 10) {

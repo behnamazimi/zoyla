@@ -59,7 +59,8 @@ export const MAX_REQUESTS = 100000;
 
 /** Concurrency limits */
 export const MIN_CONCURRENCY = 1;
-export const MAX_CONCURRENCY = 1000;
+// Hard cap based on macOS DNS resolver limits (tested: 500 = 46% success rate)
+export const MAX_CONCURRENCY = 500;
 
 /** Maximum history entries to keep */
 export const MAX_HISTORY_ENTRIES = 50;

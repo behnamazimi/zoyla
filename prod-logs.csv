@@ -1,0 +1,514 @@
+# Zoyla Test Results
+# Exported: 2025-12-22T19:51:52.795Z
+# URL: https://httpbin.org/get
+# Method: GET
+# Total Requests: 500
+# Successful: 234
+# Failed: 266
+# Total Time: 4.8183s
+# Requests/sec: 103.77
+# Avg Response: 981.65ms
+# Min Response: 0.20ms
+# Max Response: 4816.42ms
+
+request_num,status,duration_ms,success,timestamp_ms,error
+1,0,5.08,false,18.13,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458860000_3402346743)"
+2,0,6.06,false,18.16,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976457914000_2307355919)"
+3,0,17.18,false,18.18,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446799000_3507444565)"
+4,0,3.48,false,18.30,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976460623000_1918084516)"
+5,0,18.58,false,21.14,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448366000_2189328283)"
+6,0,16.05,false,21.88,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451640000_3023774770)"
+7,0,16.80,false,21.90,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450907000_2209834110)"
+8,0,16.79,false,21.92,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450933000_3027171758)"
+9,0,19.74,false,21.94,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448006000_2821010853)"
+10,0,19.69,false,21.98,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448095000_1858545734)"
+11,0,20.43,false,22.05,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447421000_808860779)"
+12,0,20.14,false,22.06,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447717000_2186686556)"
+13,0,18.18,false,22.09,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449720000_3160986786)"
+14,0,20.14,false,24.54,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450205000_3538855107)"
+15,0,19.92,false,25.28,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451162000_1243414292)"
+16,0,23.78,false,25.85,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447876000_260583028)"
+17,0,20.75,false,26.40,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451462000_3916461832)"
+18,0,24.32,false,27.00,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448481000_3035597443)"
+19,0,23.31,false,27.68,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450177000_2210511658)"
+20,0,22.99,false,28.66,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451483000_3660056057)"
+21,0,22.71,false,29.93,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453029000_1934448971)"
+22,0,23.46,false,30.58,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452918000_1441562401)"
+23,0,22.48,false,31.51,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976454828000_1065930962)"
+24,0,23.91,false,31.99,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453883000_1636834971)"
+25,0,21.32,false,32.60,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976457091000_3320967589)"
+26,0,21.97,false,33.16,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976456992000_2276865498)"
+27,0,21.58,false,33.51,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976457735000_3452849747)"
+28,0,21.49,false,33.85,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458166000_121243919)"
+29,0,21.53,false,34.19,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458466000_3776725299)"
+30,0,23.33,false,34.84,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976457313000_261411028)"
+31,0,21.22,false,35.21,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976459792000_1160473056)"
+32,0,35.12,false,35.69,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446373000_1946153636)"
+33,0,23.29,false,36.22,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458736000_1371281011)"
+34,0,25.12,false,37.85,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458542000_3928648741)"
+35,0,26.54,false,38.38,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976457651000_664435780)"
+36,0,25.66,false,38.97,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976459114000_1527495123)"
+37,0,26.89,false,39.23,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458146000_3593454209)"
+38,0,26.97,false,39.49,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458326000_3324661888)"
+39,0,25.07,false,39.77,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976460502000_3283922476)"
+40,0,25.37,false,39.90,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976460337000_1706676388)"
+41,0,26.00,false,40.38,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976460193000_133249583)"
+42,0,28.04,false,40.82,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976458595000_3672661949)"
+43,0,42.60,false,44.25,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447459000_1175131426)"
+44,0,38.54,false,44.71,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451982000_2598658420)"
+45,0,36.98,false,44.72,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453552000_14004617)"
+46,0,38.12,false,44.73,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452415000_1866245868)"
+47,0,37.05,false,44.74,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453498000_4286745481)"
+48,0,36.64,false,44.75,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453910000_789529369)"
+49,0,37.76,false,44.77,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452810000_3684278745)"
+50,0,42.31,false,44.79,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448282000_1767586446)"
+51,0,36.75,false,44.80,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453852000_2587007298)"
+52,0,37.29,false,44.83,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453338000_1638105505)"
+53,0,37.21,false,44.84,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453438000_2150232187)"
+54,0,31.01,false,44.87,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976459664000_645263857)"
+55,0,35.94,false,44.88,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976454745000_3902784208)"
+56,0,38.61,false,44.91,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452108000_3005600502)"
+57,0,38.61,false,44.95,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452143000_2596943805)"
+58,0,26.80,false,44.98,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976463995000_2207525535)"
+59,0,0.23,false,45.00,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490578000_1659210056)"
+60,0,36.75,false,45.04,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976454095000_782651873)"
+61,0,37.61,false,45.07,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453261000_3909396232)"
+62,0,0.45,false,45.44,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490792000_293346826)"
+63,0,38.71,false,45.45,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452540000_2115596067)"
+64,0,38.59,false,45.46,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452668000_2513703628)"
+65,0,0.36,false,45.47,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490915000_1552163004)"
+66,0,39.09,false,45.50,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452215000_1262675841)"
+67,0,27.29,false,45.51,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976464024000_3590605972)"
+68,0,38.60,false,45.51,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452720000_2626500716)"
+69,0,37.56,false,45.53,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453773000_2409502171)"
+70,0,37.55,false,45.55,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453801000_2565466496)"
+71,0,27.32,false,45.55,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976464037000_3828624808)"
+72,0,37.98,false,45.56,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453386000_1074544454)"
+73,0,0.74,false,45.59,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490651000_35054421)"
+74,0,39.23,false,46.07,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452645000_662253676)"
+75,0,39.29,false,46.08,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452598000_1721082157)"
+76,0,39.41,false,46.09,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452490000_3491066525)"
+77,0,38.24,false,46.10,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453663000_633538694)"
+78,0,43.86,false,46.11,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448053000_1253551127)"
+79,0,39.53,false,46.11,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452390000_1211617703)"
+80,0,43.11,false,46.13,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448828000_1583856787)"
+81,0,40.27,false,46.42,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451954000_2054166821)"
+82,0,43.37,false,46.43,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448873000_1998728317)"
+83,0,39.95,false,46.66,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452513000_3421459382)"
+84,0,45.31,false,46.67,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447165000_3329541181)"
+85,0,40.02,false,46.68,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452466000_2050562069)"
+86,0,38.86,false,46.68,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453631000_3332486442)"
+87,0,45.42,false,46.69,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447078000_3056242436)"
+88,0,43.29,false,46.72,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449235000_120064449)"
+89,0,44.61,false,46.73,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447920000_3825906739)"
+90,0,0.53,false,46.73,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492009000_916768052)"
+91,0,45.26,false,46.75,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447296000_2025908404)"
+92,0,40.49,false,46.76,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452078000_3833437645)"
+93,0,40.06,false,46.82,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452570000_698067607)"
+94,0,45.71,false,47.02,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447116000_655342352)"
+95,0,0.20,false,47.04,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492640000_2912386004)"
+96,0,40.55,false,47.06,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452314000_1847181338)"
+97,0,43.81,false,47.07,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449065000_3363915321)"
+98,0,45.05,false,47.08,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447835000_1637948592)"
+99,0,40.45,false,47.09,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452438000_54263358)"
+100,0,0.32,false,47.09,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492584000_2013276372)"
+101,0,43.99,false,47.10,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448918000_1239179038)"
+102,0,43.96,false,47.13,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448969000_1335933815)"
+103,0,42.83,false,47.13,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450110000_709468201)"
+104,0,43.34,false,47.14,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449602000_1268825781)"
+105,0,46.08,false,47.15,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446881000_3140242233)"
+106,0,41.62,false,47.17,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451358000_1093660066)"
+107,0,0.39,false,47.18,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492591000_385493676)"
+108,0,42.05,false,47.21,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450959000_2000980737)"
+109,0,42.72,false,47.23,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450316000_2424429769)"
+110,0,0.47,false,47.24,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492576000_3549598990)"
+111,0,41.55,false,47.28,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451537000_947137899)"
+112,0,44.89,false,47.29,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448206000_3304788933)"
+113,0,41.25,false,47.30,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451854000_701849687)"
+114,0,41.87,false,47.31,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451246000_1711728646)"
+115,0,0.47,false,47.31,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492649000_4247921253)"
+116,0,41.40,false,47.33,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451737000_4221394022)"
+117,0,41.96,false,47.34,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451189000_1323150917)"
+118,0,43.38,false,47.36,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449788000_89017091)"
+119,0,42.10,false,47.37,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451073000_1997458184)"
+120,0,44.04,false,47.38,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449141000_3945414892)"
+121,0,0.62,false,47.43,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492613000_1553355807)"
+122,0,45.03,false,47.55,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448326000_3383456197)"
+123,0,43.08,false,47.56,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450283000_2141862395)"
+124,0,43.13,false,47.57,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450239000_1173902483)"
+125,0,42.75,false,47.58,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450637000_2179762635)"
+126,0,26.44,false,47.59,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976466960000_2170435519)"
+127,0,42.56,false,47.60,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450848000_139282129)"
+128,0,41.74,false,47.60,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451666000_1383948442)"
+129,0,41.70,false,47.61,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451712000_97960709)"
+130,0,0.53,false,47.88,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493153000_3319679053)"
+131,0,0.48,false,47.89,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493216000_4096273755)"
+132,0,43.11,false,47.90,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450594000_3259949212)"
+133,0,44.30,false,47.98,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449484000_1263960827)"
+134,0,43.13,false,48.01,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450684000_1379769156)"
+135,0,42.21,false,48.02,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451609000_539670047)"
+136,0,0.57,false,48.03,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493258000_3659530427)"
+137,0,0.64,false,48.03,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493205000_870917715)"
+138,0,46.47,false,48.04,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447380000_3289841501)"
+139,0,0.61,false,48.05,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493239000_2160732972)"
+140,0,43.11,false,48.05,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450748000_973060898)"
+141,0,42.18,false,48.07,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451690000_4069438773)"
+142,0,44.01,false,48.64,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450433000_1877800607)"
+143,0,44.22,false,48.82,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450401000_1810900051)"
+144,0,46.86,false,48.86,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447801000_2408205810)"
+145,0,45.48,false,48.86,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449188000_3914788697)"
+146,0,26.89,false,48.87,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467790000_3584661231)"
+147,0,26.94,false,48.88,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467748000_3148958468)"
+148,0,44.23,false,48.89,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450463000_2691095895)"
+149,0,26.88,false,48.89,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467821000_753564861)"
+150,0,26.90,false,48.90,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467803000_3521206397)"
+151,0,26.87,false,48.93,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467865000_3982993298)"
+152,0,44.48,false,49.17,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450490000_4257518038)"
+153,0,28.09,false,68.00,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976485712000_1179731788)"
+154,0,31.12,false,71.95,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976486635000_4117348003)"
+155,0,60.52,false,74.54,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976459818000_3620027004)"
+156,0,65.56,false,74.55,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976454794000_4169495079)"
+157,0,59.75,false,74.65,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976460701000_119850105)"
+158,0,31.56,false,76.31,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490557000_3330640657)"
+159,0,69.08,false,76.33,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453054000_31931346)"
+160,0,69.03,false,76.33,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453105000_2266665739)"
+161,0,32.49,false,77.30,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490616000_1844979694)"
+162,0,32.34,false,77.44,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490901000_2836261684)"
+163,0,69.10,false,77.44,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976454150000_2686459188)"
+164,0,32.48,false,77.45,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490776000_3482959773)"
+165,0,32.63,false,77.46,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490635000_4232274177)"
+166,0,32.67,false,77.55,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490686000_3704353061)"
+167,0,32.78,false,77.68,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490701000_681004129)"
+168,0,33.00,false,77.80,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490605000_2433587817)"
+169,0,32.77,false,77.85,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490885000_3184237824)"
+170,0,70.31,false,77.87,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453363000_4109980752)"
+171,0,69.86,false,77.88,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453825000_690330995)"
+172,0,70.72,false,77.88,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452973000_2227365151)"
+173,0,32.90,false,77.91,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490821000_1239055771)"
+174,0,69.60,false,77.97,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976454175000_4057538757)"
+175,0,70.63,false,77.97,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453154000_1970351281)"
+176,0,32.73,false,78.37,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491444000_768954886)"
+177,0,32.77,false,78.38,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491412000_3335231918)"
+178,0,71.20,false,78.39,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452997000_69478195)"
+179,0,32.73,false,78.39,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491465000_503625678)"
+180,0,32.81,false,78.43,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491423000_4066722821)"
+181,0,32.88,false,78.47,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491404000_1182760719)"
+182,0,32.90,false,78.49,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491394000_2973290702)"
+183,0,32.87,false,78.50,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491433000_484131561)"
+184,0,72.20,false,78.57,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452180000_3449139752)"
+185,0,33.05,false,78.59,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491339000_3083688214)"
+186,0,71.62,false,78.76,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452946000_2661406082)"
+187,0,72.32,false,78.77,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452250000_2888583860)"
+188,0,71.88,false,78.77,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452694000_909108570)"
+189,0,72.54,false,78.78,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452048000_2350699818)"
+190,0,78.09,false,78.96,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446684000_2269166475)"
+191,0,78.26,false,79.00,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446543000_791237742)"
+192,0,32.89,false,79.03,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491940000_757728794)"
+193,0,32.93,false,79.08,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491948000_3997529522)"
+194,0,77.35,false,79.09,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447545000_3990343705)"
+195,0,32.66,false,79.10,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492243000_3433133334)"
+196,0,32.94,false,79.11,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491975000_764188068)"
+197,0,32.67,false,79.12,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492255000_3190938053)"
+198,0,72.31,false,79.13,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452623000_79689391)"
+199,0,32.94,false,79.14,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491999000_144541302)"
+200,0,71.26,false,79.14,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453688000_1423242011)"
+201,0,32.97,false,79.15,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491985000_3627889639)"
+202,0,78.06,false,79.21,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446958000_3683888620)"
+203,0,71.28,false,79.22,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453744000_4081558152)"
+204,0,77.85,false,79.25,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447209000_3333876491)"
+205,0,74.72,false,79.72,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450801000_1022364807)"
+206,0,32.94,false,79.73,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492598000_458425290)"
+207,0,32.97,false,79.74,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492566000_3030199480)"
+208,0,73.63,false,79.74,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451918000_2871225606)"
+209,0,77.85,false,80.17,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448130000_4211651000)"
+210,0,79.14,false,80.18,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446839000_1069600153)"
+211,0,33.33,false,80.54,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493016000_3790239202)"
+212,0,33.26,false,80.55,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493095000_588955340)"
+213,0,33.09,false,80.57,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493281000_649463070)"
+214,0,33.19,false,80.58,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493194000_401428052)"
+215,0,74.83,false,80.59,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451561000_2288820824)"
+216,0,33.37,false,80.60,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493035000_1025316410)"
+217,0,33.37,false,80.62,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493053000_3607052900)"
+218,0,33.24,false,80.73,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493303000_283967131)"
+219,0,76.98,false,80.74,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449560000_1214545731)"
+220,0,75.33,false,81.10,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451582000_177135563)"
+221,0,33.80,false,81.12,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493124000_3686601853)"
+222,0,33.81,false,81.19,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493185000_192893105)"
+223,0,76.63,false,81.20,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450375000_2871778432)"
+224,0,77.19,false,81.21,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449824000_4190811403)"
+225,0,33.67,false,81.21,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493346000_1710923660)"
+226,0,33.73,false,81.22,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493296000_3712985021)"
+227,0,33.91,false,81.37,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493266000_4231095070)"
+228,0,34.10,false,81.59,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493289000_823110613)"
+229,0,80.40,false,81.64,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976447040000_4212527669)"
+230,0,77.40,false,81.94,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450347000_2510760054)"
+231,0,34.77,false,82.27,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493311000_646223718)"
+232,0,34.78,false,82.31,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493339000_2199572069)"
+233,0,77.82,false,82.57,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450555000_3374886617)"
+234,0,79.61,false,82.90,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449104000_770242695)"
+235,0,60.95,false,82.91,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467767000_3507354752)"
+236,0,54.65,false,99.69,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490847000_3255181115)"
+237,0,81.40,false,99.71,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976464110000_1664708037)"
+238,0,92.68,false,99.72,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452839000_2986389458)"
+239,0,84.80,false,99.72,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976460731000_750300965)"
+240,0,54.78,false,99.73,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490757000_295221917)"
+241,0,54.83,false,99.74,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976490720000_2954590169)"
+242,0,91.84,false,99.75,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976453716000_608697404)"
+243,0,54.34,false,99.86,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491323000_3132175996)"
+244,0,96.36,false,99.91,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449363000_2187103278)"
+245,0,54.40,false,99.96,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491369000_3213950666)"
+246,0,54.40,false,99.97,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976491378000_2822523743)"
+247,0,97.23,false,99.98,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448559000_1035221375)"
+248,0,96.48,false,99.98,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976449316000_1308937666)"
+249,0,53.26,false,99.99,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492543000_4259747943)"
+250,0,93.44,false,100.00,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976452368000_816008115)"
+251,0,53.22,false,100.02,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492605000_1949576409)"
+252,0,97.32,false,100.04,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976448519000_1444524696)"
+253,0,94.06,false,100.04,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451790000_2484033527)"
+254,0,94.90,false,100.08,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450982000_3882140814)"
+255,0,95.39,false,100.41,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450825000_2456963086)"
+256,0,53.26,false,100.42,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976492962000_2900885576)"
+257,0,95.71,false,100.43,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976450521000_2977839115)"
+258,0,52.91,false,100.43,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493333000_2642918694)"
+259,0,78.86,false,100.93,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467878000_78583278)"
+260,0,78.85,false,100.94,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976467900000_2789907230)"
+261,0,103.30,false,108.50,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976451008000_654660630)"
+262,0,108.18,false,108.52,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976446142000_1008867971)"
+263,0,71.36,false,118.83,"DNS resolution failed: error sending request for url (https://httpbin.org/get?_cb=1766432976493276000_325012028)"
+264,200,1149.56,true,1163.68,
+265,200,1151.85,true,1163.75,
+266,200,1163.30,true,1168.94,
+267,200,1167.99,true,1179.65,
+268,200,1170.60,true,1179.66,
+269,200,1168.21,true,1179.67,
+270,200,1180.45,true,1193.93,
+271,200,1183.43,true,1196.41,
+272,200,1219.23,true,1224.53,
+273,200,1211.46,true,1224.54,
+274,200,1209.90,true,1224.54,
+275,200,1220.80,true,1225.87,
+276,200,1225.97,true,1231.21,
+277,200,1240.63,true,1244.11,
+278,200,1217.85,true,1265.36,
+279,200,1262.21,true,1265.43,
+280,200,1269.03,true,1274.36,
+281,200,1274.32,true,1274.37,
+282,200,1274.84,true,1275.45,
+283,200,1304.30,true,1304.74,
+284,200,1300.37,true,1313.99,
+285,200,1322.96,true,1325.86,
+286,200,1327.48,true,1328.14,
+287,200,1330.50,true,1344.66,
+288,200,1349.63,true,1353.47,
+289,200,1357.10,true,1359.71,
+290,200,1367.98,true,1379.14,
+291,200,1375.14,true,1381.10,
+292,200,1377.76,true,1390.64,
+293,200,1391.70,true,1405.94,
+294,200,1406.51,true,1417.58,
+295,200,1422.64,true,1426.73,
+296,200,1426.51,true,1428.46,
+297,200,1440.51,true,1440.74,
+298,200,1443.94,true,1448.10,
+299,200,1457.35,true,1470.19,
+300,200,1461.19,true,1473.35,
+301,200,1474.99,true,1478.94,
+302,200,1493.27,true,1504.87,
+303,200,1503.82,true,1509.53,
+304,200,1523.14,true,1529.35,
+305,200,1494.56,true,1529.40,
+306,200,1529.78,true,1544.34,
+307,200,1554.44,true,1556.26,
+308,200,1554.94,true,1556.39,
+309,200,1555.29,true,1556.40,
+310,200,1545.29,true,1556.41,
+311,200,1515.72,true,1561.84,
+312,200,1533.20,true,1561.87,
+313,200,1562.00,true,1576.09,
+314,200,1564.73,true,1578.15,
+315,200,1541.94,true,1581.72,
+316,200,1573.27,true,1585.55,
+317,200,1579.90,true,1587.67,
+318,200,1582.69,true,1588.28,
+319,200,1577.80,true,1591.57,
+320,200,1583.60,true,1596.74,
+321,200,1570.95,true,1596.80,
+322,200,1589.33,true,1596.81,
+323,200,1585.70,true,1624.08,
+324,200,1615.51,true,1627.27,
+325,200,1623.79,true,1632.67,
+326,200,1629.50,true,1642.18,
+327,200,1635.69,true,1644.08,
+328,200,1637.01,true,1645.21,
+329,200,1640.33,true,1652.52,
+330,200,1641.21,true,1652.56,
+331,200,1638.68,true,1652.58,
+332,200,1640.63,true,1652.59,
+333,200,1640.15,true,1653.90,
+334,200,1651.16,true,1658.48,
+335,200,1654.52,true,1659.49,
+336,200,1662.98,true,1667.21,
+337,200,1663.36,true,1667.23,
+338,200,1654.54,true,1667.25,
+339,200,1666.51,true,1698.02,
+340,200,1688.74,true,1698.08,
+341,200,1696.39,true,1705.86,
+342,200,1694.25,true,1705.89,
+343,200,1701.01,true,1705.92,
+344,200,1703.33,true,1715.75,
+345,200,1704.77,true,1717.62,
+346,200,1717.00,true,1730.17,
+347,200,1716.15,true,1730.20,
+348,200,1700.18,true,1736.40,
+349,200,1747.15,true,1747.41,
+350,200,1707.97,true,1748.36,
+351,200,1739.68,true,1753.51,
+352,200,1706.34,true,1753.79,
+353,200,1709.97,true,1754.23,
+354,200,1743.15,true,1757.63,
+355,200,1750.98,true,1765.43,
+356,200,1731.26,true,1765.46,
+357,200,1760.43,true,1774.78,
+358,200,1767.72,true,1774.81,
+359,200,1747.71,true,1779.70,
+360,502,1766.49,false,1779.72,"HTTP 502"
+361,200,1820.87,true,1821.04,
+362,200,1807.35,true,1821.07,
+363,200,1811.96,true,1825.28,
+364,200,1814.90,true,1827.86,
+365,200,1832.45,true,1834.15,
+366,200,1833.67,true,1836.31,
+367,200,1828.67,true,1840.72,
+368,200,1835.67,true,1849.63,
+369,200,1821.96,true,1849.65,
+370,200,1839.97,true,1851.85,
+371,200,1812.63,true,1851.86,
+372,200,1845.60,true,1853.00,
+373,200,1847.47,true,1856.86,
+374,200,1850.60,true,1863.69,
+375,200,1852.46,true,1863.72,
+376,200,1853.08,true,1866.73,
+377,200,1863.32,true,1876.61,
+378,200,1878.61,true,1878.99,
+379,200,1848.06,true,1887.03,
+380,200,1893.33,true,1898.84,
+381,200,1890.99,true,1902.68,
+382,200,1903.64,true,1909.25,
+383,200,1901.10,true,1909.27,
+384,200,1904.41,true,1916.23,
+385,200,1907.66,true,1922.27,
+386,200,1908.18,true,1922.32,
+387,200,1912.19,true,1926.12,
+388,200,1903.47,true,1930.47,
+389,200,1943.34,true,1946.93,
+390,200,1946.43,true,1946.96,
+391,200,1917.46,true,1951.32,
+392,200,1904.65,true,1951.35,
+393,200,1954.31,true,1959.72,
+394,200,1962.44,true,1962.64,
+395,200,1959.69,true,1973.90,
+396,200,1961.26,true,1975.93,
+397,200,1971.60,true,1975.93,
+398,200,1987.26,true,1989.62,
+399,200,1987.84,true,1995.21,
+400,200,1983.45,true,1995.25,
+401,200,1993.74,true,1995.27,
+402,200,1989.05,true,2002.25,
+403,502,1970.88,false,2006.09,"HTTP 502"
+404,200,2006.65,true,2009.09,
+405,200,1997.54,true,2027.48,
+406,200,2013.21,true,2027.51,
+407,200,2037.16,true,2044.59,
+408,200,2044.60,true,2048.78,
+409,200,2066.74,true,2067.16,
+410,200,2066.90,true,2067.20,
+411,200,2033.15,true,2078.62,
+412,200,2046.06,true,2078.66,
+413,200,2069.75,true,2081.88,
+414,200,2079.11,true,2088.40,
+415,200,2089.17,true,2092.89,
+416,200,2095.93,true,2108.48,
+417,200,2094.09,true,2108.51,
+418,200,2105.52,true,2112.49,
+419,200,2136.83,true,2144.55,
+420,200,2131.64,true,2144.76,
+421,200,2148.21,true,2160.64,
+422,200,2167.39,true,2173.40,
+423,200,2171.26,true,2182.58,
+424,200,2159.00,true,2189.58,
+425,200,2162.44,true,2195.60,
+426,200,2185.94,true,2198.58,
+427,200,2209.05,true,2209.75,
+428,200,2200.44,true,2211.86,
+429,200,2186.60,true,2211.88,
+430,200,2215.40,true,2216.18,
+431,200,2215.98,true,2230.26,
+432,200,2221.65,true,2234.14,
+433,200,2211.66,true,2238.07,
+434,200,2234.35,true,2247.62,
+435,200,2242.70,true,2252.12,
+436,200,2277.50,true,2292.01,
+437,200,2277.49,true,2292.07,
+438,200,2281.31,true,2293.78,
+439,200,2280.99,true,2295.84,
+440,200,2284.24,true,2299.00,
+441,200,2295.68,true,2308.69,
+442,200,2294.53,true,2308.72,
+443,200,2378.93,true,2390.16,
+444,200,2393.64,true,2406.40,
+445,200,2420.38,true,2459.88,
+446,200,2447.56,true,2462.34,
+447,200,2497.58,true,2510.14,
+448,200,2536.24,true,2537.43,
+449,200,2522.50,true,2537.44,
+450,200,2530.91,true,2542.44,
+451,200,2541.51,true,2554.70,
+452,200,2543.07,true,2580.92,
+453,200,2602.08,true,2608.56,
+454,200,2608.42,true,2614.50,
+455,200,2625.26,true,2630.73,
+456,200,2629.67,true,2644.00,
+457,200,2649.89,true,2660.99,
+458,200,2661.63,true,2673.20,
+459,200,2667.25,true,2678.73,
+460,200,2641.37,true,2686.33,
+461,200,2674.26,true,2686.34,
+462,200,2674.35,true,2686.37,
+463,200,2693.14,true,2705.13,
+464,200,2683.91,true,2708.46,
+465,200,2706.14,true,2713.75,
+466,200,2709.06,true,2716.12,
+467,200,2704.99,true,2717.90,
+468,200,2716.41,true,2731.39,
+469,200,2718.88,true,2732.27,
+470,200,2727.43,true,2739.16,
+471,200,2745.59,true,2757.91,
+472,200,2755.90,true,2763.41,
+473,200,2755.58,true,2769.14,
+474,200,2780.21,true,2791.59,
+475,200,2796.05,true,2796.98,
+476,200,2765.61,true,2813.13,
+477,200,2813.80,true,2827.60,
+478,200,2856.34,true,2870.02,
+479,200,2883.74,true,2884.22,
+480,200,2901.59,true,2908.86,
+481,200,2906.61,true,2918.99,
+482,200,2944.14,true,2946.30,
+483,200,2934.67,true,2949.67,
+484,200,3021.50,true,3029.63,
+485,200,3030.75,true,3037.29,
+486,200,3148.32,true,3149.15,
+487,200,3139.76,true,3153.00,
+488,502,3180.40,false,3193.21,"HTTP 502"
+489,200,3193.90,true,3207.34,
+490,200,3244.46,true,3280.15,
+491,200,3270.67,true,3317.77,
+492,200,3313.53,true,3317.80,
+493,200,3345.51,true,3353.30,
+494,200,3361.80,true,3369.47,
+495,200,3488.15,true,3491.79,
+496,200,3494.14,true,3495.92,
+497,200,3472.46,true,3505.97,
+498,200,3848.10,true,3862.82,
+499,200,4160.39,true,4167.32,
+500,200,4816.42,true,4818.28,
