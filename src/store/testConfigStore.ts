@@ -4,7 +4,7 @@
  */
 
 import { create } from "zustand";
-import type { TestConfigState, TestConfigActions } from "../types/store";
+import type { TestConfigState, TestConfigActions, FormField } from "../types/store";
 import type { HttpMethod, TestConfig, HistoryEntry } from "../types/api";
 import { DEFAULT_TEST_CONFIG } from "../constants/defaults";
 import { detectContentType } from "../utils/payload";
@@ -53,6 +53,21 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
 
   setHeaders: (headers: string) => set({ headers }),
 
+  setFormFields: (formFields: FormField[]) => set({ formFields }),
+
+  addFormField: (field: FormField) =>
+    set((state) => ({ formFields: [...state.formFields, field] })),
+
+  updateFormField: (id: string, updates: Partial<FormField>) =>
+    set((state) => ({
+      formFields: state.formFields.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    })),
+
+  removeFormField: (id: string) =>
+    set((state) => ({ formFields: state.formFields.filter((f) => f.id !== id) })),
+
+  clearFormFields: () => set({ formFields: [] }),
+
   setFromHistoryEntry: (entry: HistoryEntry) =>
     set({
       url: entry.url,
@@ -71,6 +86,7 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
       workerThreads: entry.workerThreads ?? 0,
       proxyUrl: entry.proxyUrl ?? "",
       body: entry.body ?? "",
+      formFields: [], // Don't restore form fields from history (file paths may not exist)
     }),
 
   resetToDefaults: () =>
@@ -80,9 +96,29 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
 
   getConfig: (): TestConfig => {
     const state = get();
-    // Auto-detect content type from body if body is present
+
+    // If form fields exist with content, use multipart/form-data
+    const hasFormFields =
+      state.formFields.length > 0 &&
+      state.formFields.some((f) => f.name.trim() !== "" && (f.value.trim() !== "" || f.filePath));
+
+    // Auto-detect content type from body if body is present (and no form fields)
     const contentType =
-      state.body && state.body.trim() !== "" ? detectContentType(state.body) : null;
+      !hasFormFields && state.body && state.body.trim() !== ""
+        ? detectContentType(state.body)
+        : null;
+
+    // Convert form fields to API format
+    const formFieldsConfig = hasFormFields
+      ? state.formFields
+          .filter((f) => f.name.trim() !== "")
+          .map((f) => ({
+            name: f.name,
+            value: f.value,
+            file_path: f.filePath || undefined,
+            file_name: f.fileName || undefined,
+          }))
+      : undefined;
 
     return {
       url: state.url,
@@ -100,8 +136,10 @@ export const useTestConfigStore = create<TestConfigStore>()((set, get) => ({
       disable_keep_alive: state.disableKeepAlive,
       worker_threads: state.workerThreads,
       proxy_url: state.proxyUrl,
-      body: state.body || null,
+      // If form fields exist, don't send body (multipart takes precedence)
+      body: hasFormFields ? null : state.body || null,
       payload_content_type: contentType,
+      form_fields: formFieldsConfig,
     };
   },
 }));

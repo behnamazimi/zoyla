@@ -13,6 +13,16 @@ export interface CustomHeader {
   value: string;
 }
 
+/** Form field for multipart/form-data requests */
+export interface FormFieldConfig {
+  name: string;
+  value: string;
+  /** If set, this is a file field with the absolute file path */
+  file_path?: string;
+  /** Original filename (used in Content-Disposition) */
+  file_name?: string;
+}
+
 /** Configuration for a load test run */
 export interface TestConfig {
   url: string;
@@ -39,6 +49,8 @@ export interface TestConfig {
   body?: string | null;
   /** Content-Type header value (optional, auto-detected from body if not provided). */
   payload_content_type?: string | null;
+  /** Form fields for multipart/form-data (optional, alternative to body). If set, body is ignored. */
+  form_fields?: FormFieldConfig[];
 }
 
 /** Error type classification for failed requests */

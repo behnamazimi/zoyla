@@ -1,0 +1,14 @@
+{
+  "name": "test-server",
+  "version": "1.0.0",
+  "description": "Simple test server for Zoyla load testing",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}
+

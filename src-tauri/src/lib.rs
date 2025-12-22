@@ -116,6 +116,19 @@ pub struct CustomHeader {
     pub value: String,
 }
 
+/// Form field for multipart/form-data requests
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FormFieldConfig {
+    pub name: String,
+    pub value: String,
+    /// If set, this is a file field with the absolute file path
+    #[serde(default)]
+    pub file_path: Option<String>,
+    /// Original filename (used in Content-Disposition)
+    #[serde(default)]
+    pub file_name: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoadTestConfig {
     pub url: String,
@@ -153,6 +166,9 @@ pub struct LoadTestConfig {
     /// Content-Type header value (optional, auto-detected from body by frontend).
     #[serde(default)]
     pub payload_content_type: Option<String>,
+    /// Form fields for multipart/form-data (optional, alternative to body). If set, body is ignored.
+    #[serde(default)]
+    pub form_fields: Option<Vec<FormFieldConfig>>,
 }
 
 fn default_true() -> bool {
@@ -539,6 +555,22 @@ fn should_emit_progress() -> bool {
     }
 }
 
+/// Cached file content for multipart form-data
+#[derive(Debug, Clone)]
+struct CachedFile {
+    content: Bytes,
+    file_name: String,
+}
+
+/// Form field for building multipart requests
+#[derive(Debug, Clone)]
+struct FormField {
+    name: String,
+    value: String,
+    /// Cached file content (if this is a file field)
+    file: Option<CachedFile>,
+}
+
 /// Immutable configuration for a test run
 struct TestConfig {
     url: Arc<str>,
@@ -556,6 +588,8 @@ struct TestConfig {
     payload_content_type: Option<String>,
     /// Whether to disable keep-alive (add Connection: close header)
     disable_keep_alive: bool,
+    /// Form fields for multipart/form-data (optional, takes precedence over body)
+    form_fields: Option<Arc<[FormField]>>,
 }
 
 /// Shared mutable counters for progress tracking
@@ -730,9 +764,25 @@ async fn make_request(ctx: &RequestContext, result_tx: &mpsc::UnboundedSender<Re
             }
         }
         
-        // Add body for POST, PUT, PATCH methods
-        // Bytes clone is cheap (Arc internally) - no string allocation per request
-        if let Some(body) = &config.body {
+        // Add body or multipart form for POST, PUT, PATCH methods
+        if let Some(form_fields) = &config.form_fields {
+            // Build multipart form from cached form fields
+            let mut form = reqwest::multipart::Form::new();
+            for field in form_fields.iter() {
+                if let Some(file) = &field.file {
+                    // File field - use Part with filename
+                    let part = reqwest::multipart::Part::bytes(file.content.to_vec())
+                        .file_name(file.file_name.clone());
+                    form = form.part(field.name.clone(), part);
+                } else {
+                    // Text field
+                    form = form.text(field.name.clone(), field.value.clone());
+                }
+            }
+            request = request.multipart(form);
+        } else if let Some(body) = &config.body {
+            // Regular body (JSON, XML, etc.)
+            // Bytes clone is cheap (Arc internally) - no string allocation per request
             if !body.is_empty() {
                 // Use content type from frontend (auto-detected) if not already set by user
                 if !has_content_type {
@@ -1086,8 +1136,49 @@ async fn run_load_test_inner(
         None
     };
     
+    // Process form fields if present (load file contents)
+    let form_fields: Option<Arc<[FormField]>> = if let Some(fields) = config.form_fields {
+        if !fields.is_empty() {
+            let mut processed_fields = Vec::with_capacity(fields.len());
+            for field in fields {
+                let file = if let Some(file_path) = &field.file_path {
+                    // Read file content once and cache it
+                    let content = std::fs::read(file_path)
+                        .map_err(|e| LoadTestError::InvalidConfig(
+                            format!("Failed to read file '{}': {}", file_path, e)
+                        ))?;
+                    let file_name = field.file_name.clone()
+                        .or_else(|| file_path.split('/').last().map(String::from))
+                        .or_else(|| file_path.split('\\').last().map(String::from))
+                        .unwrap_or_else(|| "file".to_string());
+                    Some(CachedFile {
+                        content: Bytes::from(content),
+                        file_name,
+                    })
+                } else {
+                    None
+                };
+                processed_fields.push(FormField {
+                    name: field.name,
+                    value: field.value,
+                    file,
+                });
+            }
+            Some(processed_fields.into())
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
     // Convert body to Bytes for cheap cloning (Arc internally)
-    let body_bytes = config.body.map(Bytes::from);
+    // Only use body if no form fields are present
+    let body_bytes = if form_fields.is_some() {
+        None
+    } else {
+        config.body.map(Bytes::from)
+    };
     
     // Create test config with immutable settings
     let test_config = Arc::new(TestConfig {
@@ -1101,6 +1192,7 @@ async fn run_load_test_inner(
         body: body_bytes,
         payload_content_type: config.payload_content_type,
         disable_keep_alive: config.disable_keep_alive,
+        form_fields,
     });
     
     // Create shared counters

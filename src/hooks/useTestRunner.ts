@@ -151,6 +151,7 @@ export function useTestRunner() {
         workerThreads: configState.workerThreads,
         proxyUrl: configState.proxyUrl,
         body: configState.body,
+        formFields: configState.formFields,
       });
 
       // Auto-show error logs if there are failures

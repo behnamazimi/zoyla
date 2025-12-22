@@ -17,6 +17,17 @@ export interface LayoutSettings {
 /** Theme mode */
 export type ThemeMode = "dark" | "light";
 
+/** Form field for multipart/form-data */
+export interface FormField {
+  id: string;
+  name: string;
+  value: string;
+  /** If set, this is a file field with the file path */
+  filePath?: string;
+  /** Original filename for display */
+  fileName?: string;
+}
+
 /** Test configuration state */
 export interface TestConfigState {
   url: string;
@@ -41,6 +52,8 @@ export interface TestConfigState {
   proxyUrl: string;
   /** Request body payload (optional, used for POST, PUT, PATCH methods). Empty string means no body. */
   body: string;
+  /** Form fields for multipart/form-data (optional, alternative to body) */
+  formFields: FormField[];
 }
 
 /** Test configuration actions */
@@ -64,6 +77,11 @@ export interface TestConfigActions {
   setWorkerThreads: (threads: number) => void;
   setProxyUrl: (url: string) => void;
   setBody: (body: string) => void;
+  setFormFields: (fields: FormField[]) => void;
+  addFormField: (field: FormField) => void;
+  updateFormField: (id: string, updates: Partial<FormField>) => void;
+  removeFormField: (id: string) => void;
+  clearFormFields: () => void;
 }
 
 /** Test runner state */

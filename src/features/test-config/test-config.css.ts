@@ -579,6 +579,157 @@ export const payloadSmartHint = style({
   gap: vars.space.xs,
 });
 
+// Payload mode toggle (Raw / Form Data)
+export const payloadModeToggle = style({
+  display: "flex",
+  background: vars.color.bg.input,
+  borderRadius: vars.radius.sm,
+  border: `1px solid ${vars.color.border.default}`,
+  padding: "2px",
+  gap: "2px",
+});
+
+export const payloadModeItem = style({
+  flex: 1,
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  fontSize: vars.font.size.sm,
+  fontWeight: vars.font.weight.medium,
+  color: vars.color.text.secondary,
+  background: "transparent",
+  border: "none",
+  borderRadius: vars.radius.sm,
+  cursor: "pointer",
+  transition: `all ${vars.transition.fast}`,
+  selectors: {
+    '&[data-state="on"]': {
+      background: vars.color.bg.surface,
+      color: vars.color.text.primary,
+    },
+    "&:hover:not([data-disabled]):not([data-state='on'])": {
+      color: vars.color.text.primary,
+    },
+    "&[data-disabled]": {
+      opacity: 0.5,
+      cursor: "not-allowed",
+    },
+  },
+});
+
+// Form fields list
+export const formFieldsList = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space.sm,
+});
+
+export const formFieldRow = style({
+  display: "flex",
+  gap: vars.space.xs,
+  alignItems: "center",
+});
+
+export const formFieldName = style({
+  width: "35%",
+  height: "32px",
+  padding: `0 ${vars.space.sm}`,
+  fontFamily: vars.font.family.mono,
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.primary,
+  background: vars.color.bg.input,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.sm,
+  outline: "none",
+  transition: `all ${vars.transition.fast}`,
+  "::placeholder": {
+    color: vars.color.text.muted,
+  },
+  ":focus": {
+    background: vars.color.bg.inputFocus,
+    borderColor: vars.color.border.focus,
+  },
+  ":disabled": {
+    opacity: 0.5,
+  },
+});
+
+export const formFieldValue = style({
+  flex: 1,
+  height: "32px",
+  padding: `0 ${vars.space.sm}`,
+  fontFamily: vars.font.family.mono,
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.primary,
+  background: vars.color.bg.input,
+  border: `1px solid ${vars.color.border.default}`,
+  borderRadius: vars.radius.sm,
+  outline: "none",
+  transition: `all ${vars.transition.fast}`,
+  "::placeholder": {
+    color: vars.color.text.muted,
+  },
+  ":focus": {
+    background: vars.color.bg.inputFocus,
+    borderColor: vars.color.border.focus,
+  },
+  ":disabled": {
+    opacity: 0.5,
+  },
+});
+
+export const formFieldFile = style({
+  flex: 1,
+  height: "32px",
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.xs,
+  padding: `0 ${vars.space.sm}`,
+  fontSize: vars.font.size.sm,
+  color: vars.color.primary.base,
+  background: vars.color.primary.subtle,
+  border: `1px solid ${vars.color.primary.base}`,
+  borderRadius: vars.radius.sm,
+  overflow: "hidden",
+});
+
+export const formFieldFileName = style({
+  flex: 1,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+
+export const formFieldActions = style({
+  display: "flex",
+  gap: vars.space.sm,
+});
+
+export const addFormFieldBtn = style({
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: vars.space.xs,
+  padding: vars.space.sm,
+  background: "transparent",
+  border: `1px dashed ${vars.color.border.default}`,
+  borderRadius: vars.radius.sm,
+  color: vars.color.text.muted,
+  fontSize: vars.font.size.sm,
+  cursor: "pointer",
+  transition: `all ${vars.transition.fast}`,
+  ":disabled": {
+    opacity: 0.5,
+    cursor: "not-allowed",
+  },
+  selectors: {
+    "&:hover:not(:disabled)": {
+      background: vars.color.primary.subtle,
+      borderColor: vars.color.primary.base,
+      color: vars.color.primary.base,
+    },
+  },
+});
+
 // Concurrency hint styles
 export const concurrencyHint = style({
   display: "flex",

@@ -37,7 +37,7 @@ const MAX_PER_CORE = 50;
 // Soft recommended limit for external targets (above this, show warnings)
 const EXTERNAL_RECOMMENDED_MAX = 200;
 // Higher limit for local targets (no DNS overhead, faster connections)
-const LOCAL_RECOMMENDED_MAX = 500;
+const LOCAL_RECOMMENDED_MAX = 1000;
 // Absolute max - hard cap based on macOS DNS resolver limits
 export const ABSOLUTE_MAX = 1000;
 

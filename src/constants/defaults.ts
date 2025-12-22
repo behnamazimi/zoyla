@@ -34,6 +34,7 @@ export const DEFAULT_TEST_CONFIG: TestConfigState = {
   workerThreads: 0, // 0 means use all available CPU cores
   proxyUrl: "", // Empty means no proxy
   body: "", // Empty means no body
+  formFields: [], // Empty means no form fields (use body instead)
 };
 
 /** Default layout settings */
@@ -60,7 +61,7 @@ export const MAX_REQUESTS = 100000;
 /** Concurrency limits */
 export const MIN_CONCURRENCY = 1;
 // Hard cap based on macOS DNS resolver limits (tested: 500 = 46% success rate)
-export const MAX_CONCURRENCY = 500;
+export const MAX_CONCURRENCY = 1000;
 
 /** Maximum history entries to keep */
 export const MAX_HISTORY_ENTRIES = 50;
