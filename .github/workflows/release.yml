@@ -87,9 +87,9 @@ jobs:
         if: matrix.platform == 'macos-latest'
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Note: APPLE_ID, APPLE_PASSWORD, and APPLE_TEAM_ID are intentionally omitted
+          # to prevent notarization attempts in CI (notarization requires network access
+          # and can fail in CI environments). The app is still signed via APPLE_SIGNING_IDENTITY.
         run: npm run tauri build -- --target ${{ matrix.target }}
 
       - name: Build the app (non-macOS)
