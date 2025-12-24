@@ -19,7 +19,11 @@
     "lint:check": "oxlint src vite.config.ts",
     "knip": "knip",
     "tauri": "tauri",
-    "version": "node scripts/version-bump.js"
+    "version": "node scripts/version-bump.js",
+    "build:macos": "./scripts/build-macos-signed.sh",
+    "build:macos:arm64": "./scripts/build-macos-signed.sh --arch arm64",
+    "build:macos:x64": "./scripts/build-macos-signed.sh --arch x64",
+    "build:macos:sign-only": "./scripts/build-macos-signed.sh --skip-notarization"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.12",
