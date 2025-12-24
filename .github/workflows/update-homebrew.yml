@@ -1,46 +1,25 @@
 name: Update Homebrew Tap
 
 on:
-  # Auto-trigger when release assets are uploaded/edited
-  release:
-    types: [edited]
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
 
 jobs:
   update-homebrew:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Extract version
+      - name: Extract version from tag
         id: version
         run: |
-          VERSION="${{ github.event.release.tag_name }}"
+          # Get the tag from the workflow run
+          VERSION="${{ github.event.workflow_run.head_branch }}"
           VERSION="${VERSION#v}"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
-      
-      - name: Check if macOS DMGs exist
-        id: check
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          
-          # Check ARM64 DMG
-          ARM64_STATUS=$(curl -sI "https://github.com/behnamazimi/zoyla/releases/download/v${VERSION}/zoyla-${VERSION}-macos-arm64.dmg" | head -1 | grep -o "[0-9][0-9][0-9]" | head -1)
-          
-          # Check x64 DMG
-          X64_STATUS=$(curl -sI "https://github.com/behnamazimi/zoyla/releases/download/v${VERSION}/zoyla-${VERSION}-macos-x64.dmg" | head -1 | grep -o "[0-9][0-9][0-9]" | head -1)
-          
-          echo "ARM64 status: $ARM64_STATUS"
-          echo "X64 status: $X64_STATUS"
-          
-          if [ "$ARM64_STATUS" = "302" ] && [ "$X64_STATUS" = "302" ]; then
-            echo "BOTH_EXIST=true" >> $GITHUB_OUTPUT
-            echo "✓ Both macOS DMGs found"
-          else
-            echo "BOTH_EXIST=false" >> $GITHUB_OUTPUT
-            echo "⚠ Missing macOS DMGs - skipping Homebrew update"
-          fi
 
       - name: Download macOS DMGs and calculate SHA256
-        if: steps.check.outputs.BOTH_EXIST == 'true'
         id: sha256
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
@@ -59,23 +38,13 @@ jobs:
           echo "X64 SHA256: $X64_SHA"
 
       - name: Checkout homebrew-zoyla
-        if: steps.check.outputs.BOTH_EXIST == 'true'
         uses: actions/checkout@v4
         with:
           repository: behnamazimi/homebrew-zoyla
           token: ${{ secrets.PAT_GITHUB }}
           path: homebrew-zoyla
 
-      - name: Pull latest changes
-        if: steps.check.outputs.BOTH_EXIST == 'true'
-        working-directory: homebrew-zoyla
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase
-
       - name: Update cask formula
-        if: steps.check.outputs.BOTH_EXIST == 'true'
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           ARM64_SHA="${{ steps.sha256.outputs.ARM64_SHA }}"
@@ -100,6 +69,12 @@ jobs:
             homepage "https://github.com/behnamazimi/zoyla"
 
             app "zoyla.app"
+
+            caveats <<~EOS
+              Zoyla is not signed with an Apple Developer certificate.
+              If you see "zoyla is damaged and can't be opened", run:
+                xattr -cr /Applications/zoyla.app
+            EOS
           end
           CASKEOF
           
@@ -109,19 +84,12 @@ jobs:
           sed -i "s/ARM64_SHA_PLACEHOLDER/$ARM64_SHA/g" homebrew-zoyla/Casks/zoyla.rb
 
       - name: Commit and push changes
-        if: steps.check.outputs.BOTH_EXIST == 'true'
         working-directory: homebrew-zoyla
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/zoyla.rb
-          set +e
-          git diff --staged --quiet
-          HAS_CHANGES=$?
-          set -e
-          if [ $HAS_CHANGES -eq 0 ]; then
-            echo "No changes to commit - cask already up to date"
-          else
-            git commit -m "Update zoyla to v${VERSION}"
-            git push
-          fi
+          git commit -m "Update zoyla to v${VERSION}"
+          git push
 
