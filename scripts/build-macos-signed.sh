@@ -216,3 +216,7 @@ echo -e "${BLUE}To upload to a GitHub release:${NC}"
 echo "  gh release upload v$VERSION $OUTPUT_DIR/*.dmg --clobber"
 echo ""
 
+echo -e "${BLUE}And then to update Homebrew tap:${NC}"
+echo "  ./scripts/update-homebrew.sh"
+echo ""
+

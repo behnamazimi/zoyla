@@ -61,11 +61,14 @@ Then reload: `source ~/.zshrc`
 # 1. Build, sign, and notarize
 npm run build:macos
 
-# 2. Upload to existing GitHub release (Homebrew updates automatically)
+# 2. Upload to existing GitHub release
 gh release upload v0.2.6 dist-macos-signed/*.dmg --clobber
+
+# 3. Update Homebrew tap (reads version from package.json)
+./scripts/update-homebrew.sh
 ```
 
-That's it! ✅ Homebrew tap updates automatically when assets are uploaded.
+That's it! ✅ The Homebrew tap will be updated with the new version and SHA256 hashes.
 
 ---
 
@@ -81,6 +84,25 @@ npm run build:macos:x64
 # Sign without notarization (faster, but users get Gatekeeper warning)
 npm run build:macos:sign-only
 ```
+
+## Updating Homebrew Tap
+
+After uploading release assets, update the Homebrew tap:
+
+```bash
+# Uses version from package.json (default)
+./scripts/update-homebrew.sh
+
+# Or specify a version manually
+./scripts/update-homebrew.sh v0.2.6
+```
+
+The script will:
+1. Check if the release exists and DMGs are available
+2. Download DMGs and calculate SHA256 hashes
+3. Clone/update the homebrew-zoyla repository
+4. Update the cask formula with new version and hashes
+5. Commit and push the changes
 
 ---
 
