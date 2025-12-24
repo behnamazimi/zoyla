@@ -90,6 +90,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SKIP_NOTARIZATION: 1
         run: npm run tauri build -- --target ${{ matrix.target }}
 
       - name: Build the app (non-macOS)
