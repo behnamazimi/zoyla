@@ -10,7 +10,7 @@
 
 Zoyla is a desktop application that provides a simple, intuitive interface for running HTTP load tests without the complexity of enterprise testing suites.
 
-![Zoyla - HTTP Load-testing](./ss.png)
+https://github.com/user-attachments/assets/ffd261c4-c7ff-49c9-8b54-685441f85244
 
 ## Target Users
 
