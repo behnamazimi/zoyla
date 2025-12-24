@@ -83,14 +83,16 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-      - name: Build the app (macOS with signing)
+      - name: Build the app (macOS with signing, no notarization)
         if: matrix.platform == 'macos-latest'
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          TAURI_SKIP_NOTARIZATION: 1
+          # Notarization requires APPLE_ID, APPLE_PASSWORD, and APPLE_TEAM_ID.
+          # Tauri auto-notarizes when all three are set. Omitting them skips notarization
+          # while still signing the app. Uncomment below to enable notarization:
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: npm run tauri build -- --target ${{ matrix.target }}
 
       - name: Build the app (non-macOS)
