@@ -66,6 +66,14 @@ jobs:
           token: ${{ secrets.PAT_GITHUB }}
           path: homebrew-zoyla
 
+      - name: Pull latest changes
+        if: steps.check.outputs.BOTH_EXIST == 'true'
+        working-directory: homebrew-zoyla
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase
+
       - name: Update cask formula
         if: steps.check.outputs.BOTH_EXIST == 'true'
         run: |
@@ -105,9 +113,15 @@ jobs:
         working-directory: homebrew-zoyla
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/zoyla.rb
-          git commit -m "Update zoyla to v${VERSION}"
-          git push
+          set +e
+          git diff --staged --quiet
+          HAS_CHANGES=$?
+          set -e
+          if [ $HAS_CHANGES -eq 0 ]; then
+            echo "No changes to commit - cask already up to date"
+          else
+            git commit -m "Update zoyla to v${VERSION}"
+            git push
+          fi
 
