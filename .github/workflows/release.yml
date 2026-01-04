@@ -191,7 +191,7 @@ jobs:
           find artifacts -type f \( -name "*.exe" -o -name "*.msi" -o -name "*.app" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" \) | head -20
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             artifacts/**/*.exe
