@@ -12,7 +12,6 @@ Zoyla is a desktop application that provides a simple, intuitive interface for r
 
 https://github.com/user-attachments/assets/09eeeb97-58ea-465f-b7fb-600e3340bb30
 
-
 ## Target Users
 
 Engineers who need quick, lightweight HTTP load testing:
