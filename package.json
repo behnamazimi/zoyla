@@ -55,7 +55,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "knip": "^5.79.0",
-    "oxlint": "^1.36.0",
+    "oxlint": "^1.38.0",
     "prettier": "^3.7.4",
     "typescript": "~5.9.3",
     "vite": "^7.0.4"
